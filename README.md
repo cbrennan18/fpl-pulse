@@ -1,12 +1,29 @@
-# React + Vite
+# FPL Pulse
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**FPL Pulse** is a data-driven breakdown of your Fantasy Premier League season — your highs, lows, and everything in between.
 
-Currently, two official plugins are available:
+Built using **React**, **Vite**, and **Tailwind CSS**, with dynamic visualizations via **Chart.js** and engaging animations powered by **Framer Motion**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- Season summaries and highlights
+- League standings and awards
+- Player loyalty and captaincy stats
+- Engaging visual storytelling
+- Fully responsive mobile-first design
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Stack
+
+- React 19
+- Vite
+- Tailwind CSS
+- Chart.js + React-Chartjs-2
+- Framer Motion
+- Phosphor Icons
+- GitHub Pages deployment
+
+## Development
+
+```bash
+npm install
+npm run dev
