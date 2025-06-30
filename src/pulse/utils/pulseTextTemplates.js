@@ -293,7 +293,7 @@ export const pulseTextTemplates = {
             return `You’ll want this chip back — ${betterWeeksThanPlayed} weeks would’ve outdone your GW${tcWeek} triple captain (${tcPoints} pts). Best chance? ${bestPossiblePoints} pts in GW${bestPossibleWeek}.`;
           }
         })()
-      : `You never used your triple captain — here are the points you missed out on: ${bestPossiblePoints} pts in GW${bestPossibleWeek}).`;
+      : `You never used your triple captain — here are the points you missed out on: ${tcSummary.bestPossiblePoints} pts in GW${tcSummary.bestPossibleWeek}.`;
 
     const tcSubtitle = tcSummary.tcUsed
       ? `Triple Captain — GW${tcSummary.tcWeek} — ${tcSummary.tcPoints} pts`
@@ -314,7 +314,7 @@ export const pulseTextTemplates = {
             return `You’ll want this chip back — ${betterWeeksThanPlayed} weeks would’ve outscored your GW${bbWeek} bench boost (${bbPoints} pts). Best bench? ${bestPossiblePoints} pts in GW${bestPossibleWeek}.`;
           }
         })()
-      : `You never used your bench boost — here’s what you missed: ${bestPossiblePoints} pts in GW${bestPossibleWeek}.`;
+      : `You never used your bench boost — here’s what you missed: ${bbSummary.bestPossiblePoints} pts in GW${bbSummary.bestPossibleWeek}.`;
     
     const bbSubtitle = bbSummary.bbUsed
       ? `Bench Boost — GW${bbSummary.bbWeek} — ${bbSummary.bbPoints} pts`
