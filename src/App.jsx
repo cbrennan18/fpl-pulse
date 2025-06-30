@@ -7,7 +7,7 @@ import PulseContainer from './pulse/containers/PulseContainer';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/fpl-pulse">
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<HomepageContainer />} />
