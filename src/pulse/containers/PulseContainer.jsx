@@ -8,12 +8,9 @@ import { useSearchParams } from 'react-router-dom';
 import { generatePulse } from '../utils/pulseCalculations';
 import { retryFetch } from '../../utils/retryFetch';
 import {
-  fetchEntrySummary,
-  fetchEntryHistory,
-  fetchEntryPicks,
-  fetchEntryTransfers,
+  fetchEntrySeasonBlob,
   fetchBootstrap,
-  fetchLiveData,
+  fetchSeasonElements,
   fetchPlayerHistory,
 } from '../../utils/fetchFplData';
 import PulsePageRenderer from '../components/PulsePageRenderer';
@@ -24,9 +21,6 @@ export default function PulseContainer() {
   const [searchParams] = useSearchParams();
   const teamId = parseInt(searchParams.get('id'), 10);
 
-  const [entryHistory, setEntryHistory] = useState(null);
-  const [managerInfo, setManagerInfo] = useState(null);
-  const [bootstrap, setBootstrap] = useState(null);
   const [pulseData, setPulseData] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -45,32 +39,24 @@ export default function PulseContainer() {
 
     const fetchPulse = async () => {
       try {
-        // 1. Fetch entry history
-        const entryHistoryData = await retryFetch(fetchEntryHistory, [teamId]);
-        if (!entryHistoryData?.current) {
-          console.warn('Invalid entryHistory data:', entryHistoryData);
-          throw new Error('Invalid entryHistory data');
-        }
-        setEntryHistory(entryHistoryData);
+        // 1. Fetch complete entry blob (replaces 40+ calls!)
+        const blob = await retryFetch(fetchEntrySeasonBlob, [teamId]);
+        if (!blob) throw new Error('Failed to load entry data');
 
-        // 2. Fetch manager info
-        const managerInfoData = await retryFetch(fetchEntrySummary, [teamId]);
-        if (!managerInfoData) throw new Error('Failed to load entry info');
+        // Extract manager info
+        const managerName = `${blob.summary.player_first_name} ${blob.summary.player_last_name}`;
+        const teamName = blob.summary.name;
 
-        const managerName = managerInfoData?.player_first_name + ' ' + managerInfoData?.player_last_name;
-        const teamName = managerInfoData?.name;
-        setManagerInfo({
-        managerName,
-        teamName,
-        });
-
-        // 3. Fetch bootstrap
+        // 2. Fetch bootstrap (unchanged)
         const bootstrapData = await retryFetch(fetchBootstrap);
         if (!bootstrapData?.elements || !bootstrapData?.events) {
           console.warn('Invalid bootstrap data:', bootstrapData);
           throw new Error('Invalid bootstrap data');
         }
-        setBootstrap(bootstrapData);
+
+        // 3. Fetch season elements (replaces 38 fetchLiveData calls!)
+        const elementsData = await retryFetch(fetchSeasonElements);
+        if (!elementsData) throw new Error('Failed to load season elements');
 
         // 4. Get player names
         const playerNames = Object.fromEntries(
@@ -80,43 +66,37 @@ export default function PulseContainer() {
         // 5. Get finished GWs
         const finishedGwIds = bootstrapData.events.filter(e => e.finished).map(e => e.id);
 
+        // 6. Build picksByGW from blob (no API calls!)
         const picksByGW = {};
+        finishedGwIds.forEach(gw => {
+          if (blob.picks_by_gw[gw]) {
+            picksByGW[gw] = blob.picks_by_gw[gw].picks;
+          }
+        });
+
+        // 7. Build liveDataByGW from elementsData (no API calls!)
         const liveDataByGW = {};
+        finishedGwIds.forEach(gw => {
+          if (elementsData.gws[gw]?.elements) {
+            liveDataByGW[gw] = Object.fromEntries(
+              elementsData.gws[gw].elements.map(e => [e.id, {
+                total_points: e.stats.total_points || 0,
+                minutes: e.stats.minutes || 0,
+                yellow_cards: e.stats.yellow_cards || 0,
+                red_cards: e.stats.red_cards || 0,
+                bonus: e.stats.bonus || 0
+              }])
+            );
+          }
+        });
 
-        // 6. Get Transfer History
-        const entryTransfersData = await retryFetch(fetchEntryTransfers, [teamId]);
+        // 8. Use blob.transfers directly (no API call!)
+        const entryTransfersData = blob.transfers;
 
-        // 7. Get Player History
-        await Promise.all(
-          finishedGwIds.map(async (gw) => {
-            try {
-              const picksData = await retryFetch(fetchEntryPicks, [teamId, gw]);
-              if (Array.isArray(picksData.picks)) {
-                picksByGW[gw] = picksData.picks;
-              }
-
-              const liveData = await retryFetch(fetchLiveData, [gw]);
-              if (Array.isArray(liveData.elements)) {
-                liveDataByGW[gw] = Object.fromEntries(
-                  liveData.elements.map(e => [e.id, {
-                    total_points: e.stats.total_points || 0,
-                    minutes: e.stats.minutes || 0,
-                    yellow_cards: e.stats.yellow_cards || 0,
-                    red_cards: e.stats.red_cards || 0,
-                    bonus: e.stats.bonus || 0
-                  }])
-                );
-              }
-            } catch (err) {
-              console.warn(`Failed to fetch picks or live data for GW${gw}`, err);
-            }
-          })
-        );
-
-        // Build set of all player IDs
+        // 9. Build set of all player IDs
         const allPlayerIds = bootstrapData.elements.map(el => el.id);
 
-        // Init playerPriceHistory
+        // 10. Init playerPriceHistory (this still needs individual calls)
         const playerPriceHistory = {};
 
         await Promise.all(
@@ -135,14 +115,27 @@ export default function PulseContainer() {
           })
         );
 
-        // === At this point we can already generate page 1 ===
+        // 11. Convert gw_summaries to entryHistory format for generatePulse
+        const entryHistoryData = {
+          current: Object.keys(blob.gw_summaries).map(gw => ({
+            event: Number(gw),
+            points: blob.gw_summaries[gw].points,
+            total_points: blob.gw_summaries[gw].total,
+            rank: blob.gw_summaries[gw].gw_rank,
+            overall_rank: blob.gw_summaries[gw].overall_rank,
+            value: blob.gw_summaries[gw].value,
+            bank: blob.gw_summaries[gw].bank,
+          }))
+        };
+
+        // 12. Generate pulse with all data
         const pulse = generatePulse({
           entryHistory: entryHistoryData,
           managerInfo: {
             managerName,
             teamName,
-            totalPoints: managerInfoData?.summary_overall_points ?? 0,
-            finalRank: managerInfoData?.summary_overall_rank ?? 0,
+            totalPoints: blob.summary.summary_overall_points ?? 0,
+            finalRank: blob.summary.summary_overall_rank ?? 0,
           },
           bootstrap: bootstrapData,
           playerNames,

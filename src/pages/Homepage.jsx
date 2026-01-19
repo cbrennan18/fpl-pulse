@@ -78,22 +78,22 @@ export default function Homepage({ manager, summary, history, loading, error, te
         {/* Floating buttons overlap the bottom of the green card */}
         <div className="absolute left-0 right-0 -bottom-6 px-4 flex gap-4 z-20">
           {/* Button 1: Navigates to mini league */}
-          {/* <button 
+          <button 
             onClick={() => navigate(`/mini-leagues?id=${teamId}`)} 
             className="flex-1 bg-white shadow-md rounded-xl py-4 px-2 flex flex-col items-center justify-center text-center"
           >
             <TrophyIcon size={32} weight="duotone" className="text-primary mb-1" />
             <span className="text-sm font-semibold text-heading">Mini League</span>
             <span className="text-xs text-subtext mt-1">View Analysis</span>
-          </button> */}
-          <button 
+          </button>
+          {/* <button 
             disabled
             className="flex-1 bg-gray-200 opacity-95 shadow-md rounded-xl py-4 px-2 flex flex-col items-center justify-center text-center cursor-not-allowed"
           >
             <TrophyIcon size={32} weight="duotone" className="text-subtext mb-1" />
             <span className="text-sm font-semibold text-heading">Mini League</span>
             <span className="text-xs text-subtext mt-1 italic">Coming soon...</span>
-          </button>
+          </button> */}
           {/* Button 2: FPL Pulse */}
           <button
             onClick={() => navigate(`/pulse?id=${teamId}`)}

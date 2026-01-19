@@ -2,6 +2,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import MiniLeagueList from '../pages/MiniLeagueList';
+import { fetchEntrySummary } from '../utils/fetchFplData';
 
 export default function MiniLeagueContainer() {
   const [searchParams] = useSearchParams();
@@ -12,18 +13,16 @@ export default function MiniLeagueContainer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const proxyBase = 'https://cloudflare-proxy.ciaranbrennan18.workers.dev';
-
   useEffect(() => {
     if (!teamId) return;
 
     const fetchData = async () => {
       setLoading(true);
       setError(false);
-      
+
       try {
-        const res = await fetch(`${proxyBase}/fpl/entry/${teamId}/summary`)
-        const data = await res.json();
+        const data = await fetchEntrySummary(teamId);
+        if (!data) throw new Error('Failed to fetch entry summary');
 
         setManager({
           firstName: data.player_first_name,

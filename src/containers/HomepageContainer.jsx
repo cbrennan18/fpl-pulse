@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Homepage from '../pages/Homepage';
-import { fetchEntrySummary, fetchEntryHistory } from '../utils/fetchFplData';
+import { fetchEntrySeasonBlob } from '../utils/fetchFplData';
 
 export default function HomepageContainer() {
   const [searchParams] = useSearchParams();
@@ -23,32 +23,44 @@ export default function HomepageContainer() {
       setError(false);
 
       try {
-        const teamData = await fetchEntrySummary(teamId);
-        const historyData = await fetchEntryHistory(teamId);
+        const blob = await fetchEntrySeasonBlob(teamId);
 
-        if (!teamData || !historyData) throw new Error('Missing required data');
+        if (!blob) throw new Error('Failed to load entry data');
 
+        // Extract summary from blob
         setManager({
-          firstName: teamData.player_first_name,
-          lastName: teamData.player_last_name,
-          teamName: teamData.name,
+          firstName: blob.summary.player_first_name,
+          lastName: blob.summary.player_last_name,
+          teamName: blob.summary.name,
         });
 
-        const classicLeagues = (teamData.leagues?.classic || []).filter(l => l.id > 321);
+        const classicLeagues = (blob.summary.leagues?.classic || []).filter(l => l.id > 321);
         setLeagues(classicLeagues);
 
-        const current = Array.isArray(historyData.current) ? historyData.current : [];
-        const latestGw = current[current.length - 1] || {};
+        // Extract latest GW summary
+        const gwNumbers = Object.keys(blob.gw_summaries).map(Number).sort((a,b) => a - b);
+        const latestGwNum = gwNumbers[gwNumbers.length - 1] || 0;
+        const latestGw = blob.gw_summaries[latestGwNum] || {};
 
         setSummary({
-          totalPoints: latestGw.total_points || 0,
+          totalPoints: latestGw.total || 0,
           overallRank: latestGw.overall_rank || 0,
           lastGwPoints: latestGw.points || 0,
-          lastGwRank: latestGw.rank || 0,
-          latestGwNumber: latestGw.event || current.length || 0,
+          lastGwRank: latestGw.gw_rank || 0,
+          latestGwNumber: latestGwNum,
         });
 
-        setHistory(current);
+        // Convert gw_summaries object to array for chart
+        const history = gwNumbers.map(gw => ({
+          event: gw,
+          points: blob.gw_summaries[gw].points,
+          total_points: blob.gw_summaries[gw].total,
+          rank: blob.gw_summaries[gw].gw_rank,
+          overall_rank: blob.gw_summaries[gw].overall_rank,
+          value: blob.gw_summaries[gw].value / 10,  // IMPORTANT: Divide by 10!
+          bank: blob.gw_summaries[gw].bank / 10,     // IMPORTANT: Divide by 10!
+        }));
+        setHistory(history);
       } catch (err) {
         console.error('FPL data fetch error:', err);
         setError(true);
