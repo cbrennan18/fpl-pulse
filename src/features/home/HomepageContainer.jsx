@@ -17,12 +17,15 @@ export default function HomepageContainer() {
   useEffect(() => {
     if (!teamId) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchData = async () => {
       setLoading(true);
       setError(false);
 
       try {
-        const blob = await fetchEntrySeasonBlob(teamId);
+        const blob = await fetchEntrySeasonBlob(teamId, { signal });
 
         if (!blob) throw new Error('Failed to load entry data');
 
@@ -58,14 +61,16 @@ export default function HomepageContainer() {
         }));
         setHistory(history);
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error('FPL data fetch error:', err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
     fetchData();
+    return () => controller.abort();
   }, [teamId]);
 
   return (

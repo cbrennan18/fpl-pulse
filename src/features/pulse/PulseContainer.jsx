@@ -6,7 +6,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { generatePulse } from './utils/pulseCalculations';
-import { retryFetch } from '../../utils/retryFetch';
 import {
   fetchEntrySeasonBlob,
   fetchBootstrap,
@@ -37,10 +36,13 @@ export default function PulseContainer() {
   useEffect(() => {
     if (!teamId) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchPulse = async () => {
       try {
         // 1. Fetch complete entry blob (replaces 40+ calls!)
-        const blob = await retryFetch(fetchEntrySeasonBlob, [teamId]);
+        const blob = await fetchEntrySeasonBlob(teamId, { signal });
         if (!blob) throw new Error('Failed to load entry data');
 
         // Extract manager info
@@ -48,14 +50,14 @@ export default function PulseContainer() {
         const teamName = blob.summary.name;
 
         // 2. Fetch bootstrap (unchanged)
-        const bootstrapData = await retryFetch(fetchBootstrap);
+        const bootstrapData = await fetchBootstrap({ signal });
         if (!bootstrapData?.elements || !bootstrapData?.events) {
           console.warn('Invalid bootstrap data:', bootstrapData);
           throw new Error('Invalid bootstrap data');
         }
 
         // 3. Fetch season elements (replaces 38 fetchLiveData calls!)
-        const elementsData = await retryFetch(fetchSeasonElements);
+        const elementsData = await fetchSeasonElements({ signal });
         if (!elementsData) throw new Error('Failed to load season elements');
 
         // 4. Get player names
@@ -102,7 +104,7 @@ export default function PulseContainer() {
         await Promise.all(
           allPlayerIds.map(async playerId => {
             try {
-              const historyData = await retryFetch(fetchPlayerHistory, [playerId]);
+              const historyData = await fetchPlayerHistory(playerId, { signal });
               if (historyData?.history) {
                 historyData.history.forEach(gw => {
                   if (!playerPriceHistory[playerId]) playerPriceHistory[playerId] = {};
@@ -148,14 +150,16 @@ export default function PulseContainer() {
         console.log('Pulse Data:', pulse);
         setPulseData(pulse);
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error('Failed to load Pulse:', err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
     fetchPulse();
+    return () => controller.abort();
   }, [teamId]);
 
   if (loading) {

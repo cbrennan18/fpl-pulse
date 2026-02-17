@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LeagueView from './LeagueView';
 import * as calcs from './awards';
-import { retryFetch } from '../../utils/retryFetch';
-
 import {
   fetchLeagueStandings,
   fetchTopEntrySummaries,
@@ -34,10 +32,13 @@ export default function LeagueViewContainer() {
   useEffect(() => {
     if (!leagueId || !teamId) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchLeague = async () => {
       try {
         // 1. Fetch standings
-        const data = await retryFetch(fetchLeagueStandings, [leagueId]);
+        const data = await fetchLeagueStandings(leagueId, { signal });
         if (!data?.standings?.results) {
           console.warn('Invalid league standings data:', data);
           return;
@@ -54,9 +55,9 @@ export default function LeagueViewContainer() {
 
         // 2. Fetch profiles for top N entries
         const topEntries = sorted.slice(0, Math.min(5, sorted.length));
-        const profileResponses = await retryFetch(fetchTopEntrySummaries, [topEntries]);
+        const profileResponses = await fetchTopEntrySummaries(topEntries, { signal });
         // 3. Fetch bootstrap (metadata: players, deadlines)
-        const bootstrap = await retryFetch(fetchBootstrap);
+        const bootstrap = await fetchBootstrap({ signal });
         if (!bootstrap?.elements || !bootstrap?.events) {
           console.warn('Invalid bootstrap data:', bootstrap);
           return;
@@ -74,7 +75,7 @@ export default function LeagueViewContainer() {
           sampledResults.map(async ({ entry, player_name }) => {
             try {
               // Fetch entry history
-              const entryData = await retryFetch(fetchEntryHistory, [entry]);
+              const entryData = await fetchEntryHistory(entry, { signal });
               const current = entryData?.current || [];
               const totalPointsByGW = {};
               current.forEach(gw => { totalPointsByGW[gw.event] = gw.total_points });
@@ -86,7 +87,7 @@ export default function LeagueViewContainer() {
                 // 4a. Picks and chip/captain/bench data for finished GWs only
                 ...finishedGwIds.map(async (gw) => {
                   try {
-                    const picksData = await retryFetch(fetchEntryPicks, [entry, gw]);
+                    const picksData = await fetchEntryPicks(entry, gw, { signal });
                     if (!Array.isArray(picksData.picks)) throw new Error(`Invalid picks structure for entry ${entry} GW ${gw}`);
 
                     if (picksData.active_chip && chipWeeks[picksData.active_chip]) chipWeeks[picksData.active_chip].push(gw);
@@ -101,7 +102,7 @@ export default function LeagueViewContainer() {
                 // 4b. Transfers
                 (async () => {
                   try {
-                    const transferData = await retryFetch(fetchEntryTransfers, [entry]);
+                    const transferData = await fetchEntryTransfers(entry, { signal });
                     transfers.push(...transferData);
                   } catch (err) {
                     console.warn(`Failed to fetch transfers for ${entry}`, err);
@@ -138,7 +139,7 @@ export default function LeagueViewContainer() {
         await Promise.all(
           finishedGwIds.map(async (gw) => {
             try {
-              const data = await retryFetch(fetchLiveData, [gw]);
+              const data = await fetchLiveData(gw, { signal });
               for (const player of Object.values(playerData)) {
                 player.minutesByGW[gw] = Object.fromEntries(data.elements.map(e => [e.id, e.stats.minutes || 0]));
               }
@@ -214,14 +215,16 @@ export default function LeagueViewContainer() {
           points_behind_change,
         });
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error('Failed to load league:', err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
     fetchLeague();
+    return () => controller.abort();
   }, [leagueId, teamId]);
 
   return (

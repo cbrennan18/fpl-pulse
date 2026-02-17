@@ -16,12 +16,15 @@ export default function LeagueListContainer() {
   useEffect(() => {
     if (!teamId) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchData = async () => {
       setLoading(true);
       setError(false);
 
       try {
-        const data = await fetchEntrySummary(teamId);
+        const data = await fetchEntrySummary(teamId, { signal });
         if (!data) throw new Error('Failed to fetch entry summary');
 
         setManager({
@@ -34,13 +37,15 @@ export default function LeagueListContainer() {
         const classicLeagues = (data.leagues?.classic || []).filter((l) => l.id > 321);
         setLeagues(classicLeagues);
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error('FPL data fetch error:', err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
     fetchData();
+    return () => controller.abort();
   }, [teamId]);
 
   return (
