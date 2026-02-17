@@ -85,14 +85,6 @@ export default function Homepage({ manager, summary, history, loading, error, te
             <span className="text-sm font-semibold text-heading">Mini League</span>
             <span className="text-xs text-subtext mt-1">View Analysis</span>
           </button>
-          {/* <button 
-            disabled
-            className="flex-1 bg-gray-200 opacity-95 shadow-md rounded-xl py-4 px-2 flex flex-col items-center justify-center text-center cursor-not-allowed"
-          >
-            <TrophyIcon size={32} weight="duotone" className="text-subtext mb-1" />
-            <span className="text-sm font-semibold text-heading">Mini League</span>
-            <span className="text-xs text-subtext mt-1 italic">Coming soon...</span>
-          </button> */}
           {/* Button 2: FPL Pulse */}
           <button
             onClick={() => navigate(`/pulse?id=${teamId}`)}
@@ -109,11 +101,6 @@ export default function Homepage({ manager, summary, history, loading, error, te
       <div className="relative mt-10 px-4 space-y-4 z-10">
         {/* Countdown to next deadline */}
         <NextDeadlineCard />
-
-        {/* Placeholders for future sections */}
-        {/* <PlaceholderCard message="Player insights coming soon..." />
-        <PlaceholderCard message="Weekly insights coming soon..." />
-        <PlaceholderCard message="Transfer insights coming soon..." /> */}
       </div>
     </BaseLayout>
   );

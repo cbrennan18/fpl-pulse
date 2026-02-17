@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BaseLayout from '../../components/BaseLayout';
 import TopBar from '../../components/TopBar';

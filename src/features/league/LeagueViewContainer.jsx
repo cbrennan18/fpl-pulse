@@ -27,7 +27,6 @@ export default function LeagueViewContainer() {
   const [league, setLeague] = useState(null);
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [topProfiles, setTopProfiles] = useState([]);
   const [awards, setAwards] = useState([]);
   const [isSampled, setIsSampled] = useState(false);
   const [error, setError] = useState(false);
@@ -56,8 +55,6 @@ export default function LeagueViewContainer() {
         // 2. Fetch profiles for top N entries
         const topEntries = sorted.slice(0, Math.min(5, sorted.length));
         const profileResponses = await retryFetch(fetchTopEntrySummaries, [topEntries]);
-        setTopProfiles(profileResponses);
-
         // 3. Fetch bootstrap (metadata: players, deadlines)
         const bootstrap = await retryFetch(fetchBootstrap);
         if (!bootstrap?.elements || !bootstrap?.events) {
@@ -208,7 +205,7 @@ export default function LeagueViewContainer() {
           current_gw: currentGw,
           entry_rank,
           entry_rank_prev,
-          entry_overall_rank: topProfiles.find(p => p.id === user?.entry)?.summary_overall_rank ?? '—',
+          entry_overall_rank: profileResponses.find(p => p?.id === user?.entry)?.summary_overall_rank ?? '—',
           avg_est_rank,
           avg_est_rank_prev,
           points_behind,
@@ -232,7 +229,6 @@ export default function LeagueViewContainer() {
       league={league}
       standings={standings}
       managerTeamId={teamId}
-      topProfiles={topProfiles}
       awards={awards}
       isSampled={isSampled}
       loading={loading}

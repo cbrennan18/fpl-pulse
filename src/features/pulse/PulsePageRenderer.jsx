@@ -23,12 +23,10 @@ export default function PulsePageRenderer({
   currentPageIndex,
   totalPages,
 }) {
-  const [progress, setProgress] = useState(0);
   const [canAdvance, setCanAdvance] = useState(true);
   const timeoutRef = useRef(null);
 
   useEffect(() => {
-    setProgress(100);
     setCanAdvance(true);
 
     if (!isPaused && onAdvance) {
@@ -90,37 +88,13 @@ export default function PulsePageRenderer({
             onReplay={() => {
               clearTimeout(timeoutRef.current);
               setCanAdvance(true);
-              setProgress(100);
-              onBack(0); // optional if not using custom back logic
+              onBack(0);
               // Add explicit state reset for Page 1
               if (typeof window !== 'undefined') {
                 window.dispatchEvent(new CustomEvent('pulse-restart'));
               }
             }}
           />
-        )}
-        {page > 10 && (
-          <>
-            <motion.h2
-              className="text-4xl font-extrabold text-white"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-            >
-              {pageData.title}
-            </motion.h2>
-
-            {typeof pageData.narrative === 'string' && (
-              <motion.p
-                className="text-xl leading-relaxed max-w-xl"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 1 }}
-              >
-                {pageData.narrative}
-              </motion.p>
-            )}
-          </>
         )}
       </motion.div>
      <PulseTopBar

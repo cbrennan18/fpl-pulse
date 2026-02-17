@@ -11,7 +11,11 @@ import {
   MinusIcon,
 } from '@phosphor-icons/react';
 
-export default function MiniLeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error }) {
+export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error }) {
+  const [searchParams] = useSearchParams();
+  const teamId = searchParams.get('teamId');
+  const navigate = useNavigate();
+  useParallax('parallax-bg');
 
   if (loading) {
     return (
@@ -38,14 +42,12 @@ export default function MiniLeagueView({ league, standings, managerTeamId, award
     entry_rank,
     rank_change,
     points_behind,
-    points_behind_prev,
     points_behind_change,
   } = league;
 
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get('teamId');
-  const navigate = useNavigate();
-  useParallax('parallax-bg');
+  const avgRankChange = Number.isFinite(avg_est_rank) && Number.isFinite(avg_est_rank_prev)
+    ? avg_est_rank_prev - avg_est_rank
+    : null;
 
   const format = (val) =>
     typeof val === 'number' ? val.toLocaleString() : val ?? '—';
@@ -71,9 +73,14 @@ export default function MiniLeagueView({ league, standings, managerTeamId, award
             <div>
               <p className="text-xs uppercase opacity-80">Top 5 Avg OR</p>
               <p className="text-lg font-semibold">{format(avg_est_rank)}</p>
-              <p className="text-xs opacity-80 italic flex items-center gap-1">
-                Chg: {renderChange(avg_est_rank, avg_est_rank_prev)}
-              </p>
+              {Number.isFinite(avgRankChange) && (
+                <p className="text-xs opacity-80 italic flex items-center gap-1">
+                  Chg: {Math.abs(avgRankChange)}
+                  {avgRankChange > 0 && <ArrowUpIcon size={12} weight="bold" />}
+                  {avgRankChange < 0 && <ArrowDownIcon size={12} weight="bold" />}
+                  {avgRankChange === 0 && <MinusIcon size={12} weight="bold" />}
+                </p>
+              )}
             </div>
             <div className="text-right">
               <p className="text-xs uppercase opacity-80">Your League Rank</p>

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Logo from '../../components/Logo';
-import LogoAnimated from '../../components/LogoAnimated';
 
 export default function Landing() {
   const [teamId, setTeamId] = useState('');

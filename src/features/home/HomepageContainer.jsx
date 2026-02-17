@@ -9,7 +9,6 @@ export default function HomepageContainer() {
   const teamId = searchParams.get('id') || '';
 
   const [manager, setManager] = useState(null);
-  const [leagues, setLeagues] = useState([]);
   const [summary, setSummary] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,10 +32,6 @@ export default function HomepageContainer() {
           lastName: blob.summary.player_last_name,
           teamName: blob.summary.name,
         });
-
-        // IDs ≤ 321 are FPL's global/system leagues — filter to user-created mini-leagues only
-        const classicLeagues = (blob.summary.leagues?.classic || []).filter(l => l.id > 321);
-        setLeagues(classicLeagues);
 
         // Extract latest GW summary
         const gwNumbers = Object.keys(blob.gw_summaries).map(Number).sort((a,b) => a - b);
@@ -77,7 +72,6 @@ export default function HomepageContainer() {
     <Homepage
       teamId={teamId}
       manager={manager}
-      leagues={leagues}
       summary={summary}
       history={history}
       loading={loading}

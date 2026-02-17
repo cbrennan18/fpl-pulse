@@ -4,7 +4,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- "scripts": {
+  "scripts": {
     "dev": "vite",
     "build": "vite build",
     "postbuild": "echo cbrennan.ie > dist/CNAME && touch dist/.nojekyll",
@@ -16,7 +16,6 @@
     "@phosphor-icons/react": "^2.1.10",
     "chart.js": "^4.4.9",
     "framer-motion": "^12.17.0",
-    "motion": "^12.19.2",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.0",
@@ -35,7 +34,6 @@
     "globals": "^16.0.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.1",
-    "vite": "^6.3.5",
-    "vite-plugin-gh-pages": "^1.0.1"
+    "vite": "^6.3.5"
   }
 }
