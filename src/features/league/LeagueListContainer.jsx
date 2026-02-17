@@ -1,10 +1,10 @@
-// src/containers/MiniLeagueListContainer.jsx
+// src/containers/LeagueListContainer.jsx
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import MiniLeagueList from '../pages/MiniLeagueList';
-import { fetchEntrySummary } from '../utils/fetchFplData';
+import LeagueList from './LeagueList';
+import { fetchEntrySummary } from '../../utils/api';
 
-export default function MiniLeagueContainer() {
+export default function LeagueListContainer() {
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get('id') || '';
 
@@ -30,6 +30,7 @@ export default function MiniLeagueContainer() {
           teamName: data.name,
         });
 
+        // IDs ≤ 321 are FPL's global/system leagues — filter to user-created mini-leagues only
         const classicLeagues = (data.leagues?.classic || []).filter((l) => l.id > 321);
         setLeagues(classicLeagues);
       } catch (err) {
@@ -43,7 +44,7 @@ export default function MiniLeagueContainer() {
   }, [teamId]);
 
   return (
-  <MiniLeagueList
+  <LeagueList
     manager={manager}
     leagues={leagues}
     loading={loading}

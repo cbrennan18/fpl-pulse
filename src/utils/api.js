@@ -1,6 +1,6 @@
-// src/utils/fetchFplData.js
+// src/utils/api.js
 
-const BASE = 'https://fpl-pulse.ciaranbrennan18.workers.dev';
+const BASE = import.meta.env.VITE_API_BASE || 'https://fpl-pulse.ciaranbrennan18.workers.dev';
 
 // General-purpose fetch wrapper with error handling
 async function fetchJson(url) {

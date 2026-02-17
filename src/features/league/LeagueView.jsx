@@ -1,10 +1,10 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import BaseLayout from '../layouts/BaseLayout';
-import TopBar from '../components/TopBar';
-import LeagueStandings from '../components/LeagueStandings';
-import AwardsCard from '../components/AwardsCard';
-import SkeletonMiniLeagueView from '../components/SkeletonMiniLeagueView';
-import useParallax from '../hooks/useParallax';
+import BaseLayout from '../../components/BaseLayout';
+import TopBar from '../../components/TopBar';
+import LeagueStandings from './LeagueStandings';
+import AwardsCard from './AwardsCard';
+import SkeletonMiniLeagueView from '../../components/skeletons/SkeletonMiniLeagueView';
+import useParallax from '../../hooks/useParallax';
 import {
   ArrowUpIcon,
   ArrowDownIcon,
@@ -49,35 +49,6 @@ export default function MiniLeagueView({ league, standings, managerTeamId, award
 
   const format = (val) =>
     typeof val === 'number' ? val.toLocaleString() : val ?? '—';
-
-  const renderChange = (curr, prev) => {
-    if (!Number.isFinite(curr) || !Number.isFinite(prev)) return '—';
-    const diff = curr - prev;
-    const abs = format(Math.abs(diff));
-
-    if (diff < 0) {
-      return (
-        <span className="flex items-center gap-1">
-          {abs}
-          <ArrowUpIcon size={12} weight="bold" />
-        </span>
-      );
-    }
-    if (diff > 0) {
-      return (
-        <span className="flex items-center gap-1">
-          {abs}
-          <ArrowDownIcon size={12} weight="bold" />
-        </span>
-      );
-    }
-    return (
-      <span className="flex items-center gap-1">
-        {abs}
-        <MinusIcon size={12} weight="bold" />
-      </span>
-    );
-  };
 
   return (
     <BaseLayout>

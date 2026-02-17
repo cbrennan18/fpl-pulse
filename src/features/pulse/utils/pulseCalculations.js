@@ -2,7 +2,7 @@
 // main logic (calls per-page functions)
 
 import { pulseTextTemplates } from './pulseTextTemplates';
-import { calculateTop5Earned, calculateTop5Missed } from '../../utils/statCalculations';
+import { calculateTop5Earned, calculateTop5Missed } from '../../league/awards/scoringAwards';
 
 // Main function: returns array of 9 pages
 export function generatePulse(data) {

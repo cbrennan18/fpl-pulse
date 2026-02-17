@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import BaseLayout from '../layouts/BaseLayout';
-import OverallRankChart from '../components/OverallRankChart';
-import NextDeadlineCard from '../components/NextDeadlineCard';
-import TopBar from '../components/TopBar';
-import PlaceholderCard from '../components/PlaceholderCard';
-import SkeletonHomepage from '../components/SkeletonHomepage';
-import useParallax from '../hooks/useParallax';
+import BaseLayout from '../../components/BaseLayout';
+import OverallRankChart from './OverallRankChart';
+import NextDeadlineCard from './NextDeadlineCard';
+import TopBar from '../../components/TopBar';
+import SkeletonHomepage from '../../components/skeletons/SkeletonHomepage';
+import useParallax from '../../hooks/useParallax';
 import { TrophyIcon, HeartbeatIcon } from '@phosphor-icons/react';
 
 export default function Homepage({ manager, summary, history, loading, error, teamId }) {

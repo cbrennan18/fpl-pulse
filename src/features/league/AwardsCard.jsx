@@ -1,6 +1,6 @@
 // src/components/AwardsCard.jsx
 import StatCard from './StatCard';
-import { getAwardContext } from '../utils/awardContext';
+import { getAwardContext } from './awardContext';
 
 export default function AwardsCard({ awards }) {
 

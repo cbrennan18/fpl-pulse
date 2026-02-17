@@ -5,16 +5,16 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { generatePulse } from '../utils/pulseCalculations';
+import { generatePulse } from './utils/pulseCalculations';
 import { retryFetch } from '../../utils/retryFetch';
 import {
   fetchEntrySeasonBlob,
   fetchBootstrap,
   fetchSeasonElements,
   fetchPlayerHistory,
-} from '../../utils/fetchFplData';
-import PulsePageRenderer from '../components/PulsePageRenderer';
-import PulseSplash from '../components/PulseSplash';
+} from '../../utils/api';
+import PulsePageRenderer from './PulsePageRenderer';
+import PulseSplash from './PulseSplash';
 
 
 export default function PulseContainer() {

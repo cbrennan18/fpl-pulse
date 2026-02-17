@@ -18,10 +18,9 @@ module.exports = {
         text: '#2F2F2F',
         heading: '#111827',
         subtext: '#6B7280',
-        subtle: '#E5E7EB',
+        subtle: '#FAFAFA',
         danger: '#EF4444',
         muted: '#f1f5f9',
-        subtle: '#FAFAFA',
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],

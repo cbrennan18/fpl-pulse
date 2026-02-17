@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import BaseLayout from '../layouts/BaseLayout';
-import TopBar from '../components/TopBar';
-import SkeletonMiniLeagueList from '../components/SkeletonMiniLeagueList';
-import useParallax from '../hooks/useParallax';
+import BaseLayout from '../../components/BaseLayout';
+import TopBar from '../../components/TopBar';
+import SkeletonMiniLeagueList from '../../components/skeletons/SkeletonMiniLeagueList';
+import useParallax from '../../hooks/useParallax';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 
 export default function MiniLeagueList({ manager, leagues, loading, error }) {

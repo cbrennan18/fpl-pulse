@@ -1,10 +1,10 @@
-// MiniLeagueViewContainer - Fetches FPL data for a given league and computes award stats for top performers
+// LeagueViewContainer - Fetches FPL data for a given league and computes award stats for top performers
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import MiniLeagueView from '../pages/MiniLeagueView';
-import * as calcs from '../utils/statCalculations';
-import { retryFetch } from '../utils/retryFetch';
+import LeagueView from './LeagueView';
+import * as calcs from './awards';
+import { retryFetch } from '../../utils/retryFetch';
 
 import {
   fetchLeagueStandings,
@@ -14,10 +14,10 @@ import {
   fetchEntryPicks,
   fetchEntryTransfers,
   fetchLiveData
-} from '../utils/fetchFplData';
+} from '../../utils/api';
 
 
-export default function MiniLeagueViewContainer() {
+export default function LeagueViewContainer() {
   // Parse leagueId and teamId from the URL
   const [searchParams] = useSearchParams();
   const leagueId = searchParams.get('id');
@@ -228,7 +228,7 @@ export default function MiniLeagueViewContainer() {
   }, [leagueId, teamId]);
 
   return (
-    <MiniLeagueView
+    <LeagueView
       league={league}
       standings={standings}
       managerTeamId={teamId}

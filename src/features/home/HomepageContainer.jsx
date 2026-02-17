@@ -1,8 +1,8 @@
 // src/containers/HomepageContainer.jsx
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Homepage from '../pages/Homepage';
-import { fetchEntrySeasonBlob } from '../utils/fetchFplData';
+import Homepage from './Homepage';
+import { fetchEntrySeasonBlob } from '../../utils/api';
 
 export default function HomepageContainer() {
   const [searchParams] = useSearchParams();
@@ -34,6 +34,7 @@ export default function HomepageContainer() {
           teamName: blob.summary.name,
         });
 
+        // IDs ≤ 321 are FPL's global/system leagues — filter to user-created mini-leagues only
         const classicLeagues = (blob.summary.leagues?.classic || []).filter(l => l.id > 321);
         setLeagues(classicLeagues);
 
