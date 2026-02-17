@@ -13,6 +13,7 @@ import {
   fetchEntryTransfers,
   fetchLiveData
 } from '../../utils/api';
+import { MAX_SAMPLED_MANAGERS, TOP_N_ENTRIES } from '../../utils/constants';
 
 
 export default function LeagueViewContainer() {
@@ -45,7 +46,7 @@ export default function LeagueViewContainer() {
         }
         const results = data.standings.results;
         const sorted = [...results].sort((a, b) => a.rank - b.rank);
-        setIsSampled(results.length > 30);
+        setIsSampled(results.length > MAX_SAMPLED_MANAGERS);
         const user = results.find(e => e.entry === teamId);
         setStandings(results);
 
@@ -54,7 +55,7 @@ export default function LeagueViewContainer() {
         const entry_rank_prev = user?.last_rank ?? null;
 
         // 2. Fetch profiles for top N entries
-        const topEntries = sorted.slice(0, Math.min(5, sorted.length));
+        const topEntries = sorted.slice(0, Math.min(TOP_N_ENTRIES, sorted.length));
         const profileResponses = await fetchTopEntrySummaries(topEntries, { signal });
         // 3. Fetch bootstrap (metadata: players, deadlines)
         const bootstrap = await fetchBootstrap({ signal });
@@ -69,7 +70,7 @@ export default function LeagueViewContainer() {
         const finishedGwIds = bootstrap.events.filter(e => e.finished).map(e => e.id);
 
         // 4. Loop through top 30 players only for awards
-        const sampledResults = results.slice(0, Math.min(30, results.length));
+        const sampledResults = results.slice(0, Math.min(MAX_SAMPLED_MANAGERS, results.length));
         const playerData = {};
         await Promise.all(
           sampledResults.map(async ({ entry, player_name }) => {

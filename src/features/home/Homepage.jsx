@@ -7,7 +7,7 @@ import SkeletonHomepage from '../../components/skeletons/SkeletonHomepage';
 import useParallax from '../../hooks/useParallax';
 import { TrophyIcon, HeartbeatIcon } from '@phosphor-icons/react';
 
-export default function Homepage({ manager, summary, history, loading, error, teamId }) {
+export default function Homepage({ manager, summary, history, nextDeadline, loading, error, teamId }) {
   const navigate = useNavigate();
   useParallax(); 
 
@@ -100,7 +100,7 @@ export default function Homepage({ manager, summary, history, loading, error, te
       {/* Remaining content below the green section + buttons */}
       <div className="relative mt-10 px-4 space-y-4 z-10">
         {/* Countdown to next deadline */}
-        <NextDeadlineCard />
+{nextDeadline && <NextDeadlineCard deadline={nextDeadline} />}
       </div>
     </BaseLayout>
   );

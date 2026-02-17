@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import LeagueList from './LeagueList';
 import { fetchEntrySummary } from '../../utils/api';
+import { SYSTEM_LEAGUE_THRESHOLD } from '../../utils/constants';
 
 export default function LeagueListContainer() {
   const [searchParams] = useSearchParams();
@@ -33,8 +34,7 @@ export default function LeagueListContainer() {
           teamName: data.name,
         });
 
-        // IDs ≤ 321 are FPL's global/system leagues — filter to user-created mini-leagues only
-        const classicLeagues = (data.leagues?.classic || []).filter((l) => l.id > 321);
+        const classicLeagues = (data.leagues?.classic || []).filter((l) => l.id > SYSTEM_LEAGUE_THRESHOLD);
         setLeagues(classicLeagues);
       } catch (err) {
         if (err.name === 'AbortError') return;

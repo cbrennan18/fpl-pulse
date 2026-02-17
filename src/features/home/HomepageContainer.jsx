@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Homepage from './Homepage';
-import { fetchEntrySeasonBlob } from '../../utils/api';
+import { fetchEntrySeasonBlob, fetchBootstrap } from '../../utils/api';
 
 export default function HomepageContainer() {
   const [searchParams] = useSearchParams();
@@ -11,6 +11,7 @@ export default function HomepageContainer() {
   const [manager, setManager] = useState(null);
   const [summary, setSummary] = useState(null);
   const [history, setHistory] = useState([]);
+  const [nextDeadline, setNextDeadline] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -25,9 +26,21 @@ export default function HomepageContainer() {
       setError(false);
 
       try {
-        const blob = await fetchEntrySeasonBlob(teamId, { signal });
+        const [blob, bootstrap] = await Promise.all([
+          fetchEntrySeasonBlob(teamId, { signal }),
+          fetchBootstrap({ signal }),
+        ]);
 
         if (!blob) throw new Error('Failed to load entry data');
+
+        // Extract next upcoming deadline from bootstrap events
+        if (bootstrap?.events) {
+          const now = new Date();
+          const upcoming = bootstrap.events.find(e => !e.finished && new Date(e.deadline_time) > now);
+          if (upcoming) {
+            setNextDeadline({ event: upcoming.id, deadline_time: upcoming.deadline_time });
+          }
+        }
 
         // Extract summary from blob
         setManager({
@@ -79,6 +92,7 @@ export default function HomepageContainer() {
       manager={manager}
       summary={summary}
       history={history}
+      nextDeadline={nextDeadline}
       loading={loading}
       error={error}
     />
