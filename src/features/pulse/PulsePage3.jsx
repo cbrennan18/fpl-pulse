@@ -1,19 +1,12 @@
 // /src/pulse/components/PulsePage3.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage3({ pageData }) {
   const { narrative } = pageData || {};
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    },2500);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(2500);
 
   if (!narrative?.mvpPlayers || !narrative?.missedPlayers) return null;
 

@@ -1,8 +1,8 @@
 // /src/pulse/components/PulsePage9.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 import { TShirtIcon } from '@phosphor-icons/react';
 
 export default function PulsePage9({ pageData }) {
@@ -14,14 +14,7 @@ export default function PulsePage9({ pageData }) {
     benchFlopLine,
   } = narrative || {};
 
-  const [step, setStep] = useState(1);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(3000, 1);
 
   return (
     <PulseLayout>

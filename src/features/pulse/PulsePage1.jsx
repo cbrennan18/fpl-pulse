@@ -3,23 +3,15 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage1({ pageData, onAdvance }) {
   const { narrative, stats } = pageData;
   const { totalPoints, finalRank } = stats || {};
 
-  const [step, setStep] = useState(0);
+  const step = useStepProgression(2500);
   const [displayPoints, setDisplayPoints] = useState(0);
   const [displayRank, setDisplayRank] = useState(0);
-
-
-  // Step progression
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
 
   // Trigger count up when step === 1
   useEffect(() => {

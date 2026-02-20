@@ -1,6 +1,6 @@
-// src/components/SkeletonMiniLeagueView.jsx
+// src/components/skeletons/SkeletonLeagueView.jsx
 
-export default function SkeletonMiniLeagueView() {
+export default function SkeletonLeagueView() {
   return (
     <div className="animate-pulse">
       {/* Green header section */}

@@ -1,19 +1,12 @@
 // /src/pulse/components/PulsePage5.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage5({ pageData }) {
   const { title, stats, introLine, inspiredLine, regretLine, puntRegretLine } = pageData || {};
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(2500);
 
   const hits = stats?.top5Stints || [];
 

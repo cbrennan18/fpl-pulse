@@ -1,6 +1,6 @@
-// src/utils/awardContext.js
+// src/features/league/awardLabels.js
 
-export function getAwardContext(awardKey, data) {
+export function getAwardLabel(awardKey, data) {
   if (!data) return '';
 
   switch (awardKey) {

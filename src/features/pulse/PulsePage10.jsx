@@ -1,22 +1,15 @@
 // /src/pulse/components/PulsePage10.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 import { ShareIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 
 export default function PulsePage10({ pageData, onReplay }) {
   const { title, narrative } = pageData || {};
   const { introLine } = narrative || {};
 
-  const [step, setStep] = useState(1);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
+  const step = useStepProgression(3000, 1);
 
   const handleShare = async () => {
     const shareData = {

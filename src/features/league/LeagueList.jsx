@@ -1,11 +1,11 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BaseLayout from '../../components/BaseLayout';
 import TopBar from '../../components/TopBar';
-import SkeletonMiniLeagueList from '../../components/skeletons/SkeletonMiniLeagueList';
+import SkeletonLeagueList from '../../components/skeletons/SkeletonLeagueList';
 import useParallax from '../../hooks/useParallax';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 
-export default function MiniLeagueList({ manager, leagues, loading, error }) {
+export default function LeagueList({ manager, leagues, loading, error }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get('id'); // FPL entry ID
@@ -14,7 +14,7 @@ export default function MiniLeagueList({ manager, leagues, loading, error }) {
   if (loading) {
     return (
       <BaseLayout>
-        <SkeletonMiniLeagueList />
+        <SkeletonLeagueList />
       </BaseLayout>
     );
   }

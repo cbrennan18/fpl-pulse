@@ -1,6 +1,6 @@
 // src/components/AwardsCard.jsx
 import StatCard from './StatCard';
-import { getAwardContext } from './awardContext';
+import { getAwardLabel } from './awardLabels';
 
 export default function AwardsCard({ awards }) {
 
@@ -32,7 +32,7 @@ export default function AwardsCard({ awards }) {
     cards.map(({ title, description, key }) => {
       const entriesWithContext = (awards[key] || []).map(entry => ({
         ...entry,
-        contextString: getAwardContext(key, entry.context),
+        contextString: getAwardLabel(key, entry.context),
       }));
 
       return (

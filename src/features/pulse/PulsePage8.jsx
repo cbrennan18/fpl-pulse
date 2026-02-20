@@ -1,21 +1,14 @@
 // /src/pulse/components/PulsePage8.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage8({ pageData }) {
   const { title, narrative, stats } = pageData || {};
   const { introLine, tcLine, tcSubtitle, bbLine, bbSubtitle } = narrative || {};
 
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(3000);
 
   return (
     <PulseLayout>

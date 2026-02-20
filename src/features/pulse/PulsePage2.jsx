@@ -1,19 +1,12 @@
 // /src/pulse/components/PulsePage2.jsx
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage2({ pageData }) {
   const { title, narrative, stats } = pageData;
   const { peakRank, stdDev } = stats || {};
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(2500);
 
   const [firstLine, restLine] = narrative.split(/(?<=\.)\s(.+)/s);
 

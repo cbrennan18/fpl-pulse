@@ -1,21 +1,14 @@
 // /src/pulse/components/PulsePage7.jsx
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage7({ pageData }) {
   const { title, narrative, stats } = pageData || {};
   const { introLine, loyaltyLine, benchLine, transfersLine } = narrative || {};
 
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(2500);
 
   const sharedProps = {
     initial: { opacity: 0, y: 20 },

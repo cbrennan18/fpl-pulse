@@ -3,7 +3,7 @@ import BaseLayout from '../../components/BaseLayout';
 import TopBar from '../../components/TopBar';
 import LeagueStandings from './LeagueStandings';
 import AwardsCard from './AwardsCard';
-import SkeletonMiniLeagueView from '../../components/skeletons/SkeletonMiniLeagueView';
+import SkeletonLeagueView from '../../components/skeletons/SkeletonLeagueView';
 import useParallax from '../../hooks/useParallax';
 import {
   ArrowUpIcon,
@@ -20,7 +20,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
   if (loading) {
     return (
       <BaseLayout>
-        <SkeletonMiniLeagueView />
+        <SkeletonLeagueView />
       </BaseLayout>
     );
   }

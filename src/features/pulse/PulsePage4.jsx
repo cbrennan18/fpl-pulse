@@ -1,19 +1,12 @@
 // /src/pulse/components/PulsePage4.jsx
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import PulseLayout from './PulseLayout';
+import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage4({ pageData }) {
   const { title, narrative, stats } = pageData;
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => prev + 1);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const step = useStepProgression(4000);
 
   return (
     <PulseLayout>

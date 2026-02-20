@@ -1,6 +1,6 @@
-// src/components/SkeletonMiniLeagueList.jsx
+// src/components/skeletons/SkeletonLeagueList.jsx
 
-export default function SkeletonMiniLeagueList() {
+export default function SkeletonLeagueList() {
   return (
     <div className="animate-pulse">
       {/* Parallax green background */}
