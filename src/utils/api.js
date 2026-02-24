@@ -32,56 +32,6 @@ export async function fetchEntrySummary(id, { signal } = {}) {
   }
 }
 
-// --- Fetch gameweek-by-gameweek history for a team ---
-export async function fetchEntryHistory(id, { signal } = {}) {
-  try {
-    return await fetchJson(`${BASE}/fpl/entry/${id}`, { signal });
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
-    console.warn(`Failed to fetch entry history for ${id}:`, err);
-    return null;
-  }
-}
-
-// --- Fetch picks for a specific entry and gameweek ---
-export async function fetchEntryPicks(entryId, gw, { signal } = {}) {
-  try {
-    const data = await fetchJson(`${BASE}/fpl/entry/${entryId}/event/${gw}/picks`, { signal });
-    if (!Array.isArray(data.picks)) throw new Error('Invalid picks format');
-    return data;
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
-    console.warn(`Failed to fetch picks for entry ${entryId} GW${gw}:`, err);
-    return null;
-  }
-}
-
-// --- Fetch all transfers for a team ---
-export async function fetchEntryTransfers(entryId, { signal } = {}) {
-  try {
-    const data = await fetchJson(`${BASE}/fpl/entry/${entryId}/transfers`, { signal });
-    if (!Array.isArray(data)) throw new Error('Transfers response is not an array');
-    return data;
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
-    console.warn(`Failed to fetch transfers for entry ${entryId}:`, err);
-    return [];
-  }
-}
-
-// --- Fetch live data (points, minutes, etc) for a given gameweek ---
-export async function fetchLiveData(gw, { signal } = {}) {
-  try {
-    const data = await fetchJson(`${BASE}/fpl/live/${gw}`, { signal });
-    if (!Array.isArray(data.elements)) throw new Error('Live data missing elements');
-    return data;
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
-    console.warn(`Failed to fetch live data for GW${gw}:`, err);
-    return { elements: [] };
-  }
-}
-
 // --- Fetch bootstrap static data: players, teams, events, etc ---
 export async function fetchBootstrap({ signal } = {}) {
   try {
@@ -106,11 +56,6 @@ export async function fetchLeagueStandings(leagueId, { signal } = {}) {
     console.warn(`Failed to fetch league standings for ${leagueId}:`, err);
     return null;
   }
-}
-
-// --- Fetch top entry summaries (wrapper around fetchEntrySummary) ---
-export async function fetchTopEntrySummaries(entries, { signal } = {}) {
-  return Promise.all(entries.map(e => fetchEntrySummary(e.entry, { signal })));
 }
 
 // --- Fetch player history ---
@@ -149,6 +94,21 @@ export async function fetchEntrySeasonBlob(entryId, { signal } = {}) {
   } catch (err) {
     if (err.name === 'AbortError') throw err;
     console.warn(`Failed to fetch entry season blob for ${entryId}:`, err);
+    return null;
+  }
+}
+
+// --- Fetch all entry blobs for a league in one call (uses /v1/ endpoint) ---
+export async function fetchLeagueEntriesPack(leagueId, { signal } = {}) {
+  try {
+    const data = await fetchJson(`${BASE}/v1/league/${leagueId}/entries-pack`, { signal });
+    if (!data?.entries || !Array.isArray(data?.members)) {
+      throw new Error('Invalid entries-pack format');
+    }
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    console.warn(`Failed to fetch entries-pack for league ${leagueId}:`, err);
     return null;
   }
 }
