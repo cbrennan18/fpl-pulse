@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   TrophyIcon,
   NumberCircleOneIcon,
@@ -17,6 +18,9 @@ import {
   CardsIcon,
 } from '@phosphor-icons/react';
 import { MEDAL_COLORS } from '../../utils/constants';
+import useUmami from '../../hooks/useUmami';
+import BottomSheet from '../../components/BottomSheet';
+import FullRankingSheet from './FullRankingSheet';
 
 const iconMap = {
   leagueLeaders: TrophyIcon,
@@ -58,8 +62,11 @@ export default function StatCard({
   title, titleSuffix, description, entries = [], variant = 'fame', category,
   userPosition, userName, statusPill, isUpcoming, upcomingStartGw,
 }) {
+  const [showFullRanking, setShowFullRanking] = useState(false);
+  const { track } = useUmami();
   const accent = awardAccent(category, variant);
   const Icon = iconMap[category];
+  const hasFullRanking = entries.length > 3 && !isUpcoming;
   const winner = entries[0];
   const runnersUp = entries.slice(1, 3);
   const userInTop3 = entries.slice(0, 3).some((e) => e.name === userName);
@@ -69,6 +76,7 @@ export default function StatCard({
   const userEntry = entries.find((e) => e.name === userName);
 
   return (
+  <>
     <div
       className="rounded-xl overflow-hidden"
       style={{
@@ -93,6 +101,14 @@ export default function StatCard({
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3 mt-1">
           {statusPill}
+          {hasFullRanking && (
+            <button
+              onClick={() => { track('award_see_all', { category, title }); setShowFullRanking(true); }}
+              className="font-mono text-[9px] uppercase tracking-wider text-[#525252]"
+            >
+              See all &rsaquo;
+            </button>
+          )}
           {Icon && <Icon size={36} weight="light" style={{ color: accent }} />}
         </div>
       </div>
@@ -209,5 +225,12 @@ export default function StatCard({
         )}
       </div>
     </div>
+
+    {hasFullRanking && (
+      <BottomSheet isOpen={showFullRanking} onClose={() => setShowFullRanking(false)} title={title}>
+        <FullRankingSheet entries={entries} userName={userName} accent={accent} />
+      </BottomSheet>
+    )}
+  </>
   );
 }

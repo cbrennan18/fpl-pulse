@@ -156,6 +156,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
     name,
     entry_rank,
     points_behind,
+    seasonFinished,
   } = league;
 
   // Compute user data for child components
@@ -264,6 +265,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
           currentGw={league.current_gw}
           leagueConfig={leagueConfig}
           biMonthlyMeta={biMonthlyMeta}
+          seasonFinished={seasonFinished}
         />
       </motion.div>
     </div>

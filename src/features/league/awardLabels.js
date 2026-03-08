@@ -37,7 +37,7 @@ export function getAwardLabel(awardKey, data) {
       return `${data.player} \u00B7 ${data.bps} BPs`;
 
     case 'mostHits':
-      return `GW${data.gw} \u00B7 ${data.points} pts on transfers`;
+      return data.gw != null ? `GW${data.gw} \u00B7 ${data.points} pts on transfers` : '';
 
     case 'neverGetFancy':
       return `${data.fancyWeeksCount} weeks`;

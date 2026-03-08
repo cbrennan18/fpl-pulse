@@ -75,6 +75,7 @@ export default function LeagueViewContainer() {
         // 3. Derive currentGw from bootstrap events (replaces fragile heuristic)
         const finishedGwIds = bootstrap.events.filter(e => e.finished).map(e => e.id);
         const currentGw = finishedGwIds.length > 0 ? Math.max(...finishedGwIds) : 1;
+        const seasonFinished = finishedGwIds.length >= 38;
 
         // 4. Build lookup maps from bootstrap
         const haalandEl = bootstrap.elements.find(el => el.second_name === 'Haaland' && el.element_type === 4);
@@ -160,6 +161,7 @@ export default function LeagueViewContainer() {
           current_gw: currentGw,
           entry_rank,
           points_behind,
+          seasonFinished,
         });
       } catch (err) {
         if (err.name === 'AbortError') return;

@@ -16,6 +16,16 @@ const LEAGUE_CONFIGS = {
   '799148': {
     monthly: true,
     oldDoll: false,
+    periodicOnly: true,
+    countingAwardKeys: new Set([
+      'monthly_1', 'monthly_2', 'monthly_3', 'monthly_4', 'monthly_5',
+      'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10',
+    ]),
+  },
+  '9385': {
+    monthly: true,
+    oldDoll: false,
+    periodicOnly: true,
     countingAwardKeys: new Set([
       'monthly_1', 'monthly_2', 'monthly_3', 'monthly_4', 'monthly_5',
       'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10',

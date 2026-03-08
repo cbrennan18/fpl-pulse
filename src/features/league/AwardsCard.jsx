@@ -89,7 +89,7 @@ function StatusPill({ status }) {
   return null;
 }
 
-function renderStatCard({ title, titleSuffix, description, key, variant, awards, currentGw, userName, userPositions, statusPill, isUpcoming, upcomingStartGw }) {
+function renderStatCard({ title, titleSuffix, description, key, variant, awards, currentGw, userName, userPositions, statusPill, isUpcoming, upcomingStartGw, seasonFinished, countingKeys }) {
   const entriesWithContext = (awards[key] || []).map((entry) => ({
     ...entry,
     contextString: getAwardLabel(key, entry.context),
@@ -97,6 +97,13 @@ function renderStatCard({ title, titleSuffix, description, key, variant, awards,
   const desc = GW_SPECIFIC_KEYS.has(key) && currentGw
     ? `${description} \u00B7 GW${currentGw}`
     : description;
+
+  // Auto-inject LIVE pill for counting awards when season is active (periodic prizes handle their own pill)
+  const isPeriodic = key.startsWith('biMonthly_') || key.startsWith('monthly_');
+  const isCounting = !countingKeys || countingKeys.has(key);
+  const livePill = !seasonFinished && isCounting && !isPeriodic
+    ? <StatusPill status="live" />
+    : null;
 
   return (
     <StatCard
@@ -109,7 +116,7 @@ function renderStatCard({ title, titleSuffix, description, key, variant, awards,
       category={key}
       userName={userName}
       userPosition={userPositions?.[key]}
-      statusPill={statusPill}
+      statusPill={statusPill || livePill}
       isUpcoming={isUpcoming}
       upcomingStartGw={upcomingStartGw}
     />
@@ -151,7 +158,7 @@ function SectionHeader({ label }) {
   );
 }
 
-export default function AwardsCard({ awards, isSampled, userName, userPositions, currentGw, leagueConfig, biMonthlyMeta }) {
+export default function AwardsCard({ awards, isSampled, userName, userPositions, currentGw, leagueConfig, biMonthlyMeta, seasonFinished }) {
   const [showMore, setShowMore] = useState(false);
   const { track } = useUmami();
   const gwSuffix = currentGw ? ` \u00B7 GW${currentGw}` : '';
@@ -160,6 +167,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
   const hasPeriodicPrizes = hasBiMonthly || hasMonthly;
   const hasOldDoll = awards.oldDoll?.length > 0;
   const countingKeys = leagueConfig?.countingAwardKeys;
+  const periodicOnly = leagueConfig?.periodicOnly ?? false;
 
   // Split main awards into counting vs non-counting
   const countingMainCards = countingKeys
@@ -172,7 +180,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
   // Non-counting: main non-counting awards + behavioural stats, behind collapsible
   const allNonCountingCards = [...nonCountingMainCards, ...collapsibleAwardCards];
 
-  const cardProps = { awards, currentGw, userName, userPositions };
+  const cardProps = { awards, currentGw, userName, userPositions, seasonFinished, countingKeys };
 
   // Periodic prize cards
   const periodicCards = hasMonthly ? monthlyCards : biMonthlyCards;
@@ -181,28 +189,32 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
 
   return (
     <div>
-      {/* Counting awards section */}
-      <SectionHeader label={`${hasPeriodicPrizes ? 'Spot Prizes' : 'League Awards'}${gwSuffix}`} />
+      {/* Counting awards section — hidden when periodicOnly (no spot prizes for monthly-only leagues) */}
+      {!periodicOnly && (
+        <>
+          <SectionHeader label={`${hasPeriodicPrizes ? 'Spot Prizes' : 'League Awards'}${gwSuffix}`} />
 
-      {isSampled && (
-        <p className="font-mono text-[9px] text-[#525252] text-center px-4 py-3">
-          Only top 30 managers sampled for award calculations.
-        </p>
+          {isSampled && (
+            <p className="font-mono text-[9px] text-[#525252] text-center px-4 py-3">
+              Only top 30 managers sampled for award calculations.
+            </p>
+          )}
+
+          <div className="px-4 pt-3 pb-8 space-y-3">
+            {countingMainCards.map(({ title, description, key, variant }) =>
+              renderStatCard({ title, description, key, variant, ...cardProps })
+            )}
+
+            {hasOldDoll && renderStatCard({
+              title: 'Old Doll Prize',
+              description: 'Top-ranked qualifying manager',
+              key: 'oldDoll',
+              variant: 'fame',
+              ...cardProps,
+            })}
+          </div>
+        </>
       )}
-
-      <div className="px-4 pt-3 pb-8 space-y-3">
-        {countingMainCards.map(({ title, description, key, variant }) =>
-          renderStatCard({ title, description, key, variant, ...cardProps })
-        )}
-
-        {hasOldDoll && renderStatCard({
-          title: 'Old Doll Prize',
-          description: 'Top-ranked qualifying manager',
-          key: 'oldDoll',
-          variant: 'fame',
-          ...cardProps,
-        })}
-      </div>
 
       {/* Periodic prizes section (bi-monthly or monthly) */}
       {hasPeriodicPrizes && (
