@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon } from '@phosphor-icons/react';
@@ -6,6 +7,7 @@ import MedalTable from './MedalTable';
 import AwardsCard from './AwardsCard';
 import SkeletonLeagueView from '../../components/skeletons/SkeletonLeagueView';
 import { HEADER_GRADIENT } from '../../utils/constants';
+import useUmami from '../../hooks/useUmami';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
 const fadeUp = (i) => ({
@@ -111,8 +113,20 @@ function getUserPositions(awards, userName) {
 
 export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error, leagueConfig, biMonthlyMeta }) {
   const [searchParams] = useSearchParams();
+  const leagueId = searchParams.get('id');
   const teamId = searchParams.get('teamId');
   const navigate = useNavigate();
+  const { track } = useUmami();
+
+  // Track error and success states
+  useEffect(() => {
+    if (loading) return;
+    if (error || !league) {
+      track('league_error', { leagueId });
+    } else {
+      track('league_view_loaded', { leagueId, name: league.name });
+    }
+  }, [loading, error, league, leagueId, track]);
 
   if (loading) {
     return (

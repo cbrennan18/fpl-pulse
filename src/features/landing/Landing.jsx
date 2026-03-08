@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PulseLogo from '../../assets/logo-mark.svg';
 import { LightningIcon, TrophyIcon, HeartbeatIcon } from '@phosphor-icons/react';
 import { fetchEntrySummary } from '../../utils/api';
+import useUmami from '../../hooks/useUmami';
 
 export default function Landing() {
   const [teamId, setTeamId] = useState('');
@@ -11,12 +12,14 @@ export default function Landing() {
   const [submitting, setSubmitting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const navigate = useNavigate();
+  const { track } = useUmami();
 
   const handleSubmit = async () => {
     const trimmed = teamId.trim();
     if (!trimmed || !/^\d+$/.test(trimmed)) {
       setTeamId('');
       setError('Enter a valid Team ID');
+      track('team_id_error', { reason: 'invalid_format' });
       return;
     }
 
@@ -27,12 +30,15 @@ export default function Landing() {
       if (!data) {
         setTeamId('');
         setError('Team not found');
+        track('team_id_error', { reason: 'not_found' });
         return;
       }
+      track('team_id_submitted');
       navigate(`/home?id=${trimmed}`);
     } catch {
       setTeamId('');
       setError('Something went wrong');
+      track('team_id_error', { reason: 'network' });
     } finally {
       setSubmitting(false);
     }
@@ -122,13 +128,13 @@ export default function Landing() {
           >
             <hr className="border-0 h-px bg-white/[0.06] mb-4" />
             <button
-              onClick={() => navigate('/home?id=51776')}
+              onClick={() => { track('demo_clicked'); navigate('/home?id=51776'); }}
               className="block text-sm text-white/50 underline underline-offset-2 decoration-white/30 hover:text-white/70 transition"
             >
               Try demo: 51776
             </button>
             <button
-              onClick={() => setShowHelp(true)}
+              onClick={() => { track('help_opened'); setShowHelp(true); }}
               className="block text-sm text-white/30 hover:text-white/50 transition no-underline"
             >
               How to find your ID &rarr;

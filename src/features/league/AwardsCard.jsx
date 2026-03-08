@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import StatCard from './StatCard';
 import { getAwardLabel } from './awardLabels';
+import useUmami from '../../hooks/useUmami';
 
 // High-engagement awards — always visible, never collapsed
 const mainAwardCards = [
@@ -152,6 +153,7 @@ function SectionHeader({ label }) {
 
 export default function AwardsCard({ awards, isSampled, userName, userPositions, currentGw, leagueConfig, biMonthlyMeta }) {
   const [showMore, setShowMore] = useState(false);
+  const { track } = useUmami();
   const gwSuffix = currentGw ? ` \u00B7 GW${currentGw}` : '';
   const hasBiMonthly = leagueConfig?.biMonthly && awards.biMonthly_1;
   const hasMonthly = leagueConfig?.monthly && awards.monthly_1;
@@ -235,7 +237,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
           {!showMore && (
             <div className="px-4 pt-2 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
               <button
-                onClick={() => setShowMore(true)}
+                onClick={() => { track('awards_expanded'); setShowMore(true); }}
                 className="w-full flex items-center justify-center py-5"
               >
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#525252]">
@@ -252,7 +254,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
               )}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                 <button
-                  onClick={() => setShowMore(false)}
+                  onClick={() => { track('awards_collapsed'); setShowMore(false); }}
                   className="w-full flex items-center justify-center py-5"
                 >
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#525252]">

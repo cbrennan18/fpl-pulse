@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import PulseLogo from '../../assets/logo-mark.svg';
 import SkeletonLeagueList from '../../components/skeletons/SkeletonLeagueList';
 import { GOLD, SILVER, BRONZE } from '../../utils/constants';
+import useUmami from '../../hooks/useUmami';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
 const fadeUp = (i) => ({
@@ -51,7 +53,7 @@ const rankColor = (rank, medal) => {
   return '#525252';
 };
 
-function LeagueRow({ league, i, navigate, teamId, disabled }) {
+function LeagueRow({ league, i, navigate, teamId, disabled, track }) {
   const rank = league.entry_rank;
   const { medal } = league;
   const accent = disabled ? null : medalColor(medal);
@@ -62,7 +64,7 @@ function LeagueRow({ league, i, navigate, teamId, disabled }) {
     <motion.button
       key={league.id}
       {...fadeUp(i + 2)}
-      onClick={disabled ? undefined : () => navigate(`/mini-league?id=${league.id}&teamId=${teamId}`)}
+      onClick={disabled ? undefined : () => { track('league_selected', { name: league.name, id: league.id, memberCount: league.rank_count }); navigate(`/mini-league?id=${league.id}&teamId=${teamId}`); }}
       disabled={disabled}
       className={`w-full min-h-[64px] flex items-center text-left transition-colors duration-150 relative ${
         disabled ? 'opacity-40 pointer-events-none' : 'active:bg-[#141414]'
@@ -133,6 +135,14 @@ function LeagueRow({ league, i, navigate, teamId, disabled }) {
 
 export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId }) {
   const navigate = useNavigate();
+  const { track } = useUmami();
+
+  const unavailableCount = !loading && !error && manager && availableLeagueIds && leagues
+    ? leagues.filter((l) => l.entry_rank != null && l.rank_count > 0 && !availableLeagueIds.has(l.id)).length
+    : 0;
+  useEffect(() => {
+    if (unavailableCount > 0) track('unavailable_leagues_shown', { count: unavailableCount });
+  }, [unavailableCount, track]);
 
   if (loading) {
     return (
@@ -202,7 +212,7 @@ export default function LeagueList({ manager, leagues, availableLeagueIds, loadi
           // While availability check is in-flight, render all as available
           if (!availableLeagueIds) {
             return leaguesWithMedals.map((league, i) => (
-              <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} />
+              <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} />
             ));
           }
 
@@ -212,7 +222,7 @@ export default function LeagueList({ manager, leagues, availableLeagueIds, loadi
           return (
             <>
               {available.map((league, i) => (
-                <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} />
+                <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} />
               ))}
               {unavailable.length > 0 && (
                 <>
