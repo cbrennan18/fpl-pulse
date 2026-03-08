@@ -2,7 +2,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import LeagueList from './LeagueList';
-import { fetchEntrySummary } from '../../utils/api';
+import { fetchEntrySummary, checkLeaguesAvailability } from '../../utils/api';
 import { SYSTEM_LEAGUE_THRESHOLD } from '../../utils/constants';
 
 export default function LeagueListContainer() {
@@ -11,6 +11,7 @@ export default function LeagueListContainer() {
 
   const [manager, setManager] = useState(null);
   const [leagues, setLeagues] = useState([]);
+  const [availableLeagueIds, setAvailableLeagueIds] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -38,6 +39,12 @@ export default function LeagueListContainer() {
           .filter((l) => l.id > SYSTEM_LEAGUE_THRESHOLD)
           .sort((a, b) => a.entry_rank - b.entry_rank);
         setLeagues(classicLeagues);
+
+        // Check which leagues have worker data available (non-blocking)
+        const leagueIds = classicLeagues.map((l) => l.id);
+        checkLeaguesAvailability(leagueIds, { signal })
+          .then((available) => { if (!signal.aborted) setAvailableLeagueIds(available); })
+          .catch(() => {});
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.error('FPL data fetch error:', err);
@@ -54,6 +61,7 @@ export default function LeagueListContainer() {
     <LeagueList
       manager={manager}
       leagues={leagues}
+      availableLeagueIds={availableLeagueIds}
       loading={loading}
       error={error}
       teamId={teamId}

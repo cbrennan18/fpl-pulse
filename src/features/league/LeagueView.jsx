@@ -44,6 +44,16 @@ const AWARD_LABELS = {
   biMonthly_3: 'Dec–Jan',
   biMonthly_4: 'Feb–Mar',
   biMonthly_5: 'Apr–May',
+  monthly_1: 'August',
+  monthly_2: 'September',
+  monthly_3: 'October',
+  monthly_4: 'November',
+  monthly_5: 'December',
+  monthly_6: 'January',
+  monthly_7: 'February',
+  monthly_8: 'March',
+  monthly_9: 'April',
+  monthly_10: 'May',
   oldDoll: 'Old Doll Prize',
 };
 
@@ -114,8 +124,16 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
 
   if (error || !league) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="font-body text-sm text-[#e5484d]">League data could not be loaded.</p>
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4 px-6">
+        <p className="font-body text-sm text-[#525252] text-center">
+          League data isn't available right now. Try again later.
+        </p>
+        <button
+          onClick={() => navigate(`/mini-leagues?id=${teamId}`)}
+          className="font-mono text-[11px] uppercase tracking-wider text-white/70 border border-white/15 rounded px-4 py-2"
+        >
+          Back to leagues
+        </button>
       </div>
     );
   }

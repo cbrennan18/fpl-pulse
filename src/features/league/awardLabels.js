@@ -59,6 +59,16 @@ export function getAwardLabel(awardKey, data) {
     case 'biMonthly_3':
     case 'biMonthly_4':
     case 'biMonthly_5':
+    case 'monthly_1':
+    case 'monthly_2':
+    case 'monthly_3':
+    case 'monthly_4':
+    case 'monthly_5':
+    case 'monthly_6':
+    case 'monthly_7':
+    case 'monthly_8':
+    case 'monthly_9':
+    case 'monthly_10':
       return '';
 
     case 'oldDoll':

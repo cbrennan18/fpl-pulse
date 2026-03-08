@@ -113,6 +113,32 @@ export async function fetchLeagueEntriesPack(leagueId, { signal } = {}) {
   }
 }
 
+// --- Check which leagues have entries-pack data available (HEAD-style) ---
+export async function checkLeaguesAvailability(leagueIds, { signal } = {}) {
+  const results = await Promise.all(
+    leagueIds.map(async (id) => {
+      try {
+        const res = await fetch(`${BASE}/v1/league/${id}/entries-pack`, { method: 'HEAD', signal });
+        if (res.ok) return { id, available: true };
+        if (res.status === 404) return { id, available: false };
+        console.error(`[FPL Pulse] Unexpected status ${res.status} checking league ${id}`);
+        return { id, available: false };
+      } catch (err) {
+        if (err.name === 'AbortError') throw err;
+        console.error(`[FPL Pulse] Network error checking league ${id}:`, err);
+        return { id, available: false };
+      }
+    })
+  );
+
+  const unavailableIds = results.filter((r) => !r.available).map((r) => r.id);
+  if (unavailableIds.length > 0) {
+    console.warn('[FPL Pulse] Leagues not yet available in data pack:', unavailableIds);
+  }
+
+  return new Set(results.filter((r) => r.available).map((r) => r.id));
+}
+
 // --- Fetch season elements (all GW live data in one call) ---
 export async function fetchSeasonElements({ signal } = {}) {
   try {

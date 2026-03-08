@@ -51,7 +51,87 @@ const rankColor = (rank, medal) => {
   return '#525252';
 };
 
-export default function LeagueList({ manager, leagues, loading, error, teamId }) {
+function LeagueRow({ league, i, navigate, teamId, disabled }) {
+  const rank = league.entry_rank;
+  const { medal } = league;
+  const accent = disabled ? null : medalColor(medal);
+  const bg = disabled ? undefined : medalBg(medal);
+  const diff = league.entry_last_rank ? league.entry_last_rank - rank : 0;
+
+  return (
+    <motion.button
+      key={league.id}
+      {...fadeUp(i + 2)}
+      onClick={disabled ? undefined : () => navigate(`/mini-league?id=${league.id}&teamId=${teamId}`)}
+      disabled={disabled}
+      className={`w-full min-h-[64px] flex items-center text-left transition-colors duration-150 relative ${
+        disabled ? 'opacity-40 pointer-events-none' : 'active:bg-[#141414]'
+      }`}
+      style={{
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        backgroundColor: bg,
+      }}
+    >
+      {/* Medal accent bar */}
+      {accent && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-[3px]"
+          style={{ backgroundColor: accent }}
+        />
+      )}
+
+      {/* Rank column — fixed 72px, right-aligned */}
+      <div className="w-[72px] shrink-0 flex items-center justify-end pr-3 gap-1.5">
+        {!disabled && accent && (
+          <div
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ backgroundColor: accent }}
+          />
+        )}
+        <span
+          className="font-mono text-[15px] tabular-nums text-right"
+          style={{ color: disabled ? '#525252' : rankColor(rank, medal) }}
+        >
+          {formatRank(rank)}
+        </span>
+      </div>
+
+      {/* League info */}
+      <div className="flex-1 py-3 min-w-0">
+        <p className="font-body font-medium text-[14px] text-white leading-tight">
+          {league.name}
+        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {league.rank_count > 0 && (
+            <span className="font-mono text-[10px] text-[#525252]">
+              {league.rank_count.toLocaleString()} members
+            </span>
+          )}
+          {league.rank_count >= 10000 && (
+            <span className="font-mono text-[8px] text-[#525252] uppercase border border-[#525252]/15 rounded px-1 py-px leading-none">
+              Large
+            </span>
+          )}
+          {diff !== 0 ? (
+            <span
+              className="font-mono text-[10px]"
+              style={{ color: diff > 0 ? '#00e87a' : '#e5484d' }}
+            >
+              {diff > 0 ? `\u2191${formatRank(diff)}` : `\u2193${formatRank(Math.abs(diff))}`}
+            </span>
+          ) : (
+            <span className="font-mono text-[10px] text-[#525252]">&mdash;</span>
+          )}
+        </div>
+      </div>
+
+      {/* Chevron — hidden for disabled rows */}
+      {!disabled && <CaretRightIcon size={16} className="text-[#525252] shrink-0 mr-4" />}
+    </motion.button>
+  );
+}
+
+export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId }) {
   const navigate = useNavigate();
 
   if (loading) {
@@ -70,8 +150,11 @@ export default function LeagueList({ manager, leagues, loading, error, teamId })
     );
   }
 
+  // Filter out leagues missing critical data
+  const completeLeagues = leagues.filter((l) => l.entry_rank != null && l.rank_count > 0);
+
   // Compute medals for all leagues
-  const leaguesWithMedals = leagues.map((league) => ({
+  const leaguesWithMedals = completeLeagues.map((league) => ({
     ...league,
     medal: getMedal(league.entry_rank, league.rank_count),
   }));
@@ -102,7 +185,7 @@ export default function LeagueList({ manager, leagues, loading, error, teamId })
       <motion.div {...fadeUp(1)}>
         <div className="bg-[#141414] px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] text-center">
-            {leagues.length} LEAGUES
+            {completeLeagues.length} LEAGUES
             <span className="mx-1.5">&middot;</span>
             <span style={{ color: GOLD }}>GOLD: {goldCount || '\u2014'}</span>
             <span className="mx-1.5">&middot;</span>
@@ -115,82 +198,38 @@ export default function LeagueList({ manager, leagues, loading, error, teamId })
 
       {/* League rows */}
       <div>
-        {leaguesWithMedals.map((league, i) => {
-          const rank = league.entry_rank;
-          const { medal } = league;
-          const accent = medalColor(medal);
-          const bg = medalBg(medal);
-          const diff = league.entry_last_rank ? league.entry_last_rank - rank : 0;
+        {(() => {
+          // While availability check is in-flight, render all as available
+          if (!availableLeagueIds) {
+            return leaguesWithMedals.map((league, i) => (
+              <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} />
+            ));
+          }
+
+          const available = leaguesWithMedals.filter((l) => availableLeagueIds.has(l.id));
+          const unavailable = leaguesWithMedals.filter((l) => !availableLeagueIds.has(l.id));
 
           return (
-            <motion.button
-              key={league.id}
-              {...fadeUp(i + 2)}
-              onClick={() => navigate(`/mini-league?id=${league.id}&teamId=${teamId}`)}
-              className="w-full min-h-[64px] flex items-center text-left active:bg-[#141414] transition-colors duration-150 relative"
-              style={{
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                backgroundColor: bg,
-              }}
-            >
-              {/* Medal accent bar */}
-              {accent && (
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-[3px]"
-                  style={{ backgroundColor: accent }}
-                />
+            <>
+              {available.map((league, i) => (
+                <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} />
+              ))}
+              {unavailable.length > 0 && (
+                <>
+                  <div className="px-4 pt-6 pb-3 flex items-center gap-3">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 shrink-0">
+                      Coming Soon
+                    </p>
+                    <div className="flex-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+                  </div>
+                  {unavailable.map((league, i) => (
+                    <LeagueRow key={league.id} league={league} i={available.length + i} disabled />
+                  ))}
+                </>
               )}
-
-              {/* Rank column — fixed 72px, right-aligned */}
-              <div className="w-[72px] shrink-0 flex items-center justify-end pr-3 gap-1.5">
-                {accent && (
-                  <div
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: accent }}
-                  />
-                )}
-                <span
-                  className="font-mono text-[15px] tabular-nums text-right"
-                  style={{ color: rankColor(rank, medal) }}
-                >
-                  {formatRank(rank)}
-                </span>
-              </div>
-
-              {/* League info */}
-              <div className="flex-1 py-3 min-w-0">
-                <p className="font-body font-medium text-[14px] text-white leading-tight">
-                  {league.name}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {league.rank_count > 0 && (
-                    <span className="font-mono text-[10px] text-[#525252]">
-                      {league.rank_count.toLocaleString()} members
-                    </span>
-                  )}
-                  {league.rank_count >= 10000 && (
-                    <span className="font-mono text-[8px] text-[#525252] uppercase border border-[#525252]/15 rounded px-1 py-px leading-none">
-                      Large
-                    </span>
-                  )}
-                  {diff !== 0 ? (
-                    <span
-                      className="font-mono text-[10px]"
-                      style={{ color: diff > 0 ? '#00e87a' : '#e5484d' }}
-                    >
-                      {diff > 0 ? `\u2191${formatRank(diff)}` : `\u2193${formatRank(Math.abs(diff))}`}
-                    </span>
-                  ) : (
-                    <span className="font-mono text-[10px] text-[#525252]">&mdash;</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Chevron */}
-              <CaretRightIcon size={16} className="text-[#525252] shrink-0 mr-4" />
-            </motion.button>
+            </>
           );
-        })}
+        })()}
       </div>
     </div>
   );

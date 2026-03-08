@@ -14,9 +14,12 @@ const LEAGUE_CONFIGS = {
     ]),
   },
   '799148': {
-    biMonthly: false,
+    monthly: true,
     oldDoll: false,
-    countingAwardKeys: new Set([]),
+    countingAwardKeys: new Set([
+      'monthly_1', 'monthly_2', 'monthly_3', 'monthly_4', 'monthly_5',
+      'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10',
+    ]),
   },
 };
 

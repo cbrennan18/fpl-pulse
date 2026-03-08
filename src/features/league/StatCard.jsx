@@ -51,7 +51,7 @@ const ACCENT_MAP = {
 
 const awardAccent = (category, variant) =>
   ACCENT_MAP[category]
-  || (category.startsWith('biMonthly_') ? '#f0b429' : null)
+  || (category.startsWith('biMonthly_') || category.startsWith('monthly_') ? '#f0b429' : null)
   || (variant === 'fame' ? '#00e87a' : '#e5484d');
 
 export default function StatCard({

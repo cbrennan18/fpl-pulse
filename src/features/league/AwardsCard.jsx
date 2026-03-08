@@ -35,6 +35,19 @@ const biMonthlyCards = [
   { label: 'Apr\u2013May', key: 'biMonthly_5' },
 ];
 
+const monthlyCards = [
+  { label: 'August', key: 'monthly_1' },
+  { label: 'September', key: 'monthly_2' },
+  { label: 'October', key: 'monthly_3' },
+  { label: 'November', key: 'monthly_4' },
+  { label: 'December', key: 'monthly_5' },
+  { label: 'January', key: 'monthly_6' },
+  { label: 'February', key: 'monthly_7' },
+  { label: 'March', key: 'monthly_8' },
+  { label: 'April', key: 'monthly_9' },
+  { label: 'May', key: 'monthly_10' },
+];
+
 // Awards where the stat accumulates across the season (GW-context relevant)
 const GW_SPECIFIC_KEYS = new Set([
   'leagueLeaders', 'mostConsistent', 'mostTransfers', 'mostHits',
@@ -103,9 +116,9 @@ function renderStatCard({ title, titleSuffix, description, key, variant, awards,
 }
 
 /**
- * Sort bi-monthly cards: live first, then completed (reverse chrono), then upcoming.
+ * Sort periodic cards: live first, then completed (reverse chrono), then upcoming.
  */
-function sortBiMonthlyCards(cards, meta) {
+function sortPeriodicCards(cards, meta) {
   if (!meta) return cards;
 
   const live = [];
@@ -126,14 +139,27 @@ function sortBiMonthlyCards(cards, meta) {
   return [...live, ...final, ...upcoming];
 }
 
+function SectionHeader({ label }) {
+  return (
+    <div className="px-4 pt-8 pb-3 flex items-center gap-3">
+      <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] shrink-0">
+        {label}
+      </p>
+      <div className="flex-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+    </div>
+  );
+}
+
 export default function AwardsCard({ awards, isSampled, userName, userPositions, currentGw, leagueConfig, biMonthlyMeta }) {
   const [showMore, setShowMore] = useState(false);
   const gwSuffix = currentGw ? ` \u00B7 GW${currentGw}` : '';
   const hasBiMonthly = leagueConfig?.biMonthly && awards.biMonthly_1;
+  const hasMonthly = leagueConfig?.monthly && awards.monthly_1;
+  const hasPeriodicPrizes = hasBiMonthly || hasMonthly;
   const hasOldDoll = awards.oldDoll?.length > 0;
   const countingKeys = leagueConfig?.countingAwardKeys;
 
-  // For leagues with counting keys, split main awards into counting vs other
+  // Split main awards into counting vs non-counting
   const countingMainCards = countingKeys
     ? mainAwardCards.filter(c => countingKeys.has(c.key))
     : mainAwardCards;
@@ -141,23 +167,20 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
     ? mainAwardCards.filter(c => !countingKeys.has(c.key))
     : [];
 
-  // Collapsible cards: always the behavioural stats + any non-counting main awards
-  const allCollapsibleCards = [...nonCountingMainCards, ...collapsibleAwardCards];
+  // Non-counting: main non-counting awards + behavioural stats, behind collapsible
+  const allNonCountingCards = [...nonCountingMainCards, ...collapsibleAwardCards];
 
   const cardProps = { awards, currentGw, userName, userPositions };
 
-  // Sort bi-monthly cards by status
-  const sortedBiMonthly = sortBiMonthlyCards(biMonthlyCards, biMonthlyMeta);
+  // Periodic prize cards
+  const periodicCards = hasMonthly ? monthlyCards : biMonthlyCards;
+  const sortedPeriodic = sortPeriodicCards(periodicCards, biMonthlyMeta);
+  const periodicLabel = hasMonthly ? 'Monthly Prizes' : 'Bi-Monthly Prizes';
 
   return (
     <div>
-      {/* Spot prizes / League awards section */}
-      <div className="px-4 pt-8 pb-3 flex items-center gap-3">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] shrink-0">
-          {hasBiMonthly ? 'Spot Prizes' : 'League Awards'}{gwSuffix}
-        </p>
-        <div className="flex-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
-      </div>
+      {/* Counting awards section */}
+      <SectionHeader label={`${hasPeriodicPrizes ? 'Spot Prizes' : 'League Awards'}${gwSuffix}`} />
 
       {isSampled && (
         <p className="font-mono text-[9px] text-[#525252] text-center px-4 py-3">
@@ -179,18 +202,13 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
         })}
       </div>
 
-      {/* Bi-monthly prizes section */}
-      {hasBiMonthly && (
+      {/* Periodic prizes section (bi-monthly or monthly) */}
+      {hasPeriodicPrizes && (
         <>
-          <div className="px-4 pt-8 pb-3 flex items-center gap-3">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] shrink-0">
-              Bi-Monthly Prizes{gwSuffix}
-            </p>
-            <div className="flex-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
-          </div>
+          <SectionHeader label={`${periodicLabel}${gwSuffix}`} />
 
           <div className="px-4 pt-3 pb-8 space-y-3">
-            {sortedBiMonthly.map(({ label, key }) => {
+            {sortedPeriodic.map(({ label, key }) => {
               const m = biMonthlyMeta?.[key];
               const status = m?.status || 'upcoming';
               const gwRange = m?.gwRange || '';
@@ -211,8 +229,8 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
         </>
       )}
 
-      {/* Collapsible lower-engagement awards */}
-      {allCollapsibleCards.length > 0 && (
+      {/* Non-counting awards — always below the split */}
+      {allNonCountingCards.length > 0 && (
         <>
           {!showMore && (
             <div className="px-4 pt-2 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
@@ -221,7 +239,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
                 className="w-full flex items-center justify-center py-5"
               >
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#525252]">
-                  MORE AWARDS ({allCollapsibleCards.length}) &#9660;
+                  MORE AWARDS ({allNonCountingCards.length}) &#9660;
                 </span>
               </button>
             </div>
@@ -229,7 +247,7 @@ export default function AwardsCard({ awards, isSampled, userName, userPositions,
 
           {showMore && (
             <div className="px-4 pt-1 pb-4 space-y-3">
-              {allCollapsibleCards.map(({ title, description, key, variant }) =>
+              {allNonCountingCards.map(({ title, description, key, variant }) =>
                 renderStatCard({ title, description, key, variant, ...cardProps })
               )}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>

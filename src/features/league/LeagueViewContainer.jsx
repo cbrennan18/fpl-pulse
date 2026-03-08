@@ -13,7 +13,7 @@ import {
 } from '../../utils/api';
 import { MAX_SAMPLED_MANAGERS } from '../../utils/constants';
 import { getLeagueConfig } from './leagueConfig';
-import { calculateBiMonthlyPrizes } from './awards/biMonthlyAwards';
+import { calculateBiMonthlyPrizes, calculateMonthlyPrizes } from './awards/biMonthlyAwards';
 
 
 export default function LeagueViewContainer() {
@@ -123,11 +123,15 @@ export default function LeagueViewContainer() {
           bestPunt: calcs.calculateBestPunt(dataMap, liveDataByGW, ownershipMap, playerNames),
         };
 
-        // League-specific awards
+        // League-specific periodic prizes
         if (leagueConfig?.biMonthly) {
           const biMonthly = calculateBiMonthlyPrizes(playerData, bootstrap.phases, finishedGwIds);
           Object.assign(allAwards, biMonthly.awards);
           setBiMonthlyMeta(biMonthly.meta);
+        } else if (leagueConfig?.monthly) {
+          const monthly = calculateMonthlyPrizes(playerData, bootstrap.phases, finishedGwIds);
+          Object.assign(allAwards, monthly.awards);
+          setBiMonthlyMeta(monthly.meta);
         }
 
         if (leagueConfig?.oldDoll?.qualifyingEntryIds?.length > 0) {
