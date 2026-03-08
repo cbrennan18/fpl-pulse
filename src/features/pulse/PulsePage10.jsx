@@ -26,7 +26,7 @@ export default function PulsePage10({ pageData, onReplay }) {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(shareData.text);
         alert('Link copied to clipboard!');
       }
     } catch (err) {
@@ -63,6 +63,7 @@ export default function PulsePage10({ pageData, onReplay }) {
                 <div className="flex gap-4">
                   <button
                     onClick={handleShare}
+                    aria-label="Share your FPL Pulse"
                     className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full font-medium shadow-md"
                   >
                     <ShareIcon size={20} weight="bold" />
@@ -71,6 +72,7 @@ export default function PulsePage10({ pageData, onReplay }) {
 
                   <button
                     onClick={onReplay}
+                    aria-label="Replay your FPL Pulse"
                     className="flex items-center gap-2 border border-white text-white px-4 py-2 rounded-full font-medium"
                   >
                     <ArrowClockwiseIcon size={20} weight="bold" />

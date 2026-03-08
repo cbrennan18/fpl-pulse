@@ -12,6 +12,8 @@ import {
   fetchSeasonElements,
 } from '../../utils/api';
 import { MAX_SAMPLED_MANAGERS } from '../../utils/constants';
+import { getLeagueConfig } from './leagueConfig';
+import { calculateBiMonthlyPrizes } from './awards/biMonthlyAwards';
 
 
 export default function LeagueViewContainer() {
@@ -25,6 +27,7 @@ export default function LeagueViewContainer() {
   const [awards, setAwards] = useState([]);
   const [isSampled, setIsSampled] = useState(false);
   const [error, setError] = useState(false);
+  const [biMonthlyMeta, setBiMonthlyMeta] = useState(null);
 
   useEffect(() => {
     if (!leagueId || !teamId) return;
@@ -67,15 +70,15 @@ export default function LeagueViewContainer() {
 
         const user = results.find(e => e.entry === teamId);
         const entry_rank = user?.rank ?? null;
-        const entry_rank_prev = user?.last_rank ?? null;
+
 
         // 3. Derive currentGw from bootstrap events (replaces fragile heuristic)
         const finishedGwIds = bootstrap.events.filter(e => e.finished).map(e => e.id);
         const currentGw = finishedGwIds.length > 0 ? Math.max(...finishedGwIds) : 1;
 
         // 4. Build lookup maps from bootstrap
-        const salahEl = bootstrap.elements.find(el => el.second_name === 'Salah' && el.element_type === 4);
-        const salahId = salahEl?.id ?? null;
+        const haalandEl = bootstrap.elements.find(el => el.second_name === 'Haaland' && el.element_type === 4);
+        const haalandId = haalandEl?.id ?? null;
         const ownershipMap = Object.fromEntries(
           bootstrap.elements.map(el => [el.id, parseFloat(el.selected_by_percent)])
         );
@@ -94,10 +97,12 @@ export default function LeagueViewContainer() {
         });
 
         // 6. Calculate awards
-        const dataMap = { ...playerData, _meta: { deadlines, ownershipMap, playerNames } };
+        const dataMap = { ...playerData, _meta: { deadlines, ownershipMap, playerNames, finishedGwIds } };
         const wildcards = calcs.calculateWildcards(dataMap);
         const freeHits = calcs.calculateFreeHits(dataMap);
-        setAwards({
+        const leagueConfig = getLeagueConfig(leagueId);
+
+        const allAwards = {
           leagueLeaders: calcs.calculateLeagueLeaders(dataMap),
           oneHitWonders: calcs.calculateOneHitWonders(dataMap),
           hotStreak: calcs.calculateHotStreak(dataMap),
@@ -106,7 +111,7 @@ export default function LeagueViewContainer() {
           mostHits: calcs.calculateMostHits(dataMap),
           bestWildcard: wildcards.best,
           worstWildcard: wildcards.worst,
-          neverGetFancy: calcs.calculateNeverGetFancy(dataMap, liveDataByGW, salahId, playerNames),
+          neverGetFancy: calcs.calculateNeverGetFancy(dataMap, liveDataByGW, haalandId, playerNames),
           benchDisaster: calcs.calculateBenchDisaster(dataMap),
           earlyBird: calcs.calculateEarlyBird(dataMap),
           lateOwl: calcs.calculateLateOwl(dataMap),
@@ -116,45 +121,41 @@ export default function LeagueViewContainer() {
           mostCards: calcs.calculateMostCards(dataMap, liveDataByGW),
           mostBps: calcs.calculateMostBps(dataMap, liveDataByGW, playerNames),
           bestPunt: calcs.calculateBestPunt(dataMap, liveDataByGW, ownershipMap, playerNames),
-        });
+        };
 
-        // 7. User-specific league summary
-        const avg_est_rank = calcs.calculateTop5AvgRank(playerData, results, -1);
-        const avg_est_rank_prev = calcs.calculateTop5AvgRank(playerData, results, -2);
-        const rank_change = calcs.calculateLeagueRankChange(entry_rank, entry_rank_prev);
-
-        const userHist = playerData[user?.entry]?.history;
-        const leaderHist = playerData[sorted[0]?.entry]?.history;
-        if (!userHist || !leaderHist) {
-          console.warn('Missing user or leader history:', { userHist, leaderHist });
-          return;
+        // League-specific awards
+        if (leagueConfig?.biMonthly) {
+          const biMonthly = calculateBiMonthlyPrizes(playerData, bootstrap.phases, finishedGwIds);
+          Object.assign(allAwards, biMonthly.awards);
+          setBiMonthlyMeta(biMonthly.meta);
         }
 
+        if (leagueConfig?.oldDoll?.qualifyingEntryIds?.length > 0) {
+          const qualifying = results
+            .filter(e => leagueConfig.oldDoll.qualifyingEntryIds.includes(e.entry))
+            .sort((a, b) => a.rank - b.rank)
+            .map(e => ({
+              name: e.player_name,
+              score: e.rank,
+              value: `${e.total} pts`,
+              context: { totalPoints: e.total, rank: e.rank },
+            }));
+          allAwards.oldDoll = qualifying;
+        }
+
+        setAwards(allAwards);
+
+        // 7. User-specific league summary
         const userTotals = playerData[user?.entry]?.totalPointsByGW ?? {};
         const leaderTotals = playerData[sorted[0]?.entry]?.totalPointsByGW ?? {};
 
-        const {
-          points_behind,
-          points_behind_prev,
-          points_behind_change,
-        } = calcs.calculatePointsBehindChange(userTotals, leaderTotals, currentGw);
-
-        // entry_overall_rank from the blob's summary (no extra API call)
-        const userBlob = entriesPack.entries[user?.entry];
-        const entry_overall_rank = userBlob?.summary?.summary_overall_rank ?? '—';
+        const { points_behind } = calcs.calculatePointsBehindChange(userTotals, leaderTotals, currentGw);
 
         setLeague({
           name: standingsData.league.name,
           current_gw: currentGw,
           entry_rank,
-          entry_rank_prev,
-          entry_overall_rank,
-          avg_est_rank,
-          avg_est_rank_prev,
           points_behind,
-          points_behind_prev,
-          rank_change,
-          points_behind_change,
         });
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -169,6 +170,8 @@ export default function LeagueViewContainer() {
     return () => controller.abort();
   }, [leagueId, teamId]);
 
+  const leagueConfig = getLeagueConfig(leagueId);
+
   return (
     <LeagueView
       league={league}
@@ -178,6 +181,8 @@ export default function LeagueViewContainer() {
       isSampled={isSampled}
       loading={loading}
       error={error}
+      leagueConfig={leagueConfig}
+      biMonthlyMeta={biMonthlyMeta}
     />
   );
 }

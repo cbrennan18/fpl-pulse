@@ -4,11 +4,12 @@ import PulseLayout from './PulseLayout';
 import useStepProgression from '../../hooks/useStepProgression';
 
 export default function PulsePage2({ pageData }) {
+  if (!pageData) return null;
   const { title, narrative, stats } = pageData;
   const { peakRank, stdDev } = stats || {};
   const step = useStepProgression(2500);
 
-  const [firstLine, restLine] = narrative.split(/(?<=\.)\s(.+)/s);
+  const [firstLine, restLine] = narrative?.split(/(?<=\.)\s(.+)/s) || [];
 
   return (
     <PulseLayout>
@@ -33,7 +34,7 @@ export default function PulsePage2({ pageData }) {
             >
               Peak Rank:{' '}
               <span className="text-white font-extrabold">
-                {peakRank.toLocaleString()}
+                {peakRank?.toLocaleString()}
               </span>
             </motion.p>
 
@@ -45,7 +46,7 @@ export default function PulsePage2({ pageData }) {
             >
               Rank Variance:{' '}
               <span className="text-white font-extrabold">
-                {stdDev.toLocaleString()}
+                {stdDev?.toLocaleString()}
               </span>
             </motion.p>
           </div>

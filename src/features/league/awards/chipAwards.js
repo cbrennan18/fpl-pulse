@@ -26,8 +26,7 @@ export function calculateWildcards(data) {
   return {
     best: results
       .sort((a, b) => b.best.points - a.best.points)
-      .slice(0, 3)
-      .map(p => ({
+            .map(p => ({
         name: p.name,
         score: p.best.points,
         value: p.best.points.toString(),
@@ -35,8 +34,7 @@ export function calculateWildcards(data) {
       })),
     worst: results
       .sort((a, b) => a.worst.points - b.worst.points)
-      .slice(0, 3)
-      .map(p => ({
+            .map(p => ({
         name: p.name,
         score: p.worst.points,
         value: p.worst.points.toString(),
@@ -56,6 +54,8 @@ export function calculateFreeHits(data) {
         return { gw, points: gwData?.points || 0 };
       });
 
+      if (!scores.length) return null;
+
       const best = scores.reduce((a, b) => (b.points > a.points ? b : a));
       const worst = scores.reduce((a, b) => (b.points < a.points ? b : a));
 
@@ -64,13 +64,12 @@ export function calculateFreeHits(data) {
         best,
         worst
       };
-    });
+    }).filter(Boolean);
 
   return {
     best: results
       .sort((a, b) => b.best.points - a.best.points)
-      .slice(0, 3)
-      .map(p => ({
+            .map(p => ({
         name: p.name,
         score: p.best.points,
         value: p.best.points.toString(),
@@ -81,8 +80,7 @@ export function calculateFreeHits(data) {
       })),
     worst: results
       .sort((a, b) => a.worst.points - b.worst.points)
-      .slice(0, 3)
-      .map(p => ({
+            .map(p => ({
         name: p.name,
         score: p.worst.points,
         value: p.worst.points.toString(),

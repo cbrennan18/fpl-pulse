@@ -38,7 +38,7 @@ export default function PulsePage3({ pageData }) {
               >
                 {narrative.mvpPlayers.map((item, index) => (
                   <motion.div
-                    key={index}
+                    key={item.player || index}
                     className="flex items-center justify-between w-full gap-4"
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -65,7 +65,7 @@ export default function PulsePage3({ pageData }) {
               >
                 {narrative.missedPlayers.map((item, index) => (
                   <motion.div
-                    key={index}
+                    key={item.player || index}
                     className="flex items-center justify-between w-full gap-4"
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -17,7 +17,7 @@ export function calculateMostTransfers(data) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Calculates total hit points from transfers (transfer costs) across the season.
@@ -51,12 +51,13 @@ export function calculateMostHits(data) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Calculates total points difference by not captaining Salah each week when he outscored the actual captain.
 // Context: total times you got fancy and didn't captain Salah.
 export function calculateNeverGetFancy(data, liveData, salahId, playerNames = {}) {
+  const gwIds = data._meta?.finishedGwIds || [];
   return Object.values(data)
     .filter(player => player && player.captainHistory)
     .map(player => {
@@ -67,18 +68,12 @@ export function calculateNeverGetFancy(data, liveData, salahId, playerNames = {}
       let worstGw = null;
       let worstPlayer = null;
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         const picks = player.picks[gw];
-        if (!Array.isArray(picks)) {
-          console.warn(`Missing picks for ${player.name} GW${gw}`);
-          continue;
-        }
+        if (!Array.isArray(picks)) continue;
 
         const actualCaptainPick = picks.find(pick => pick.multiplier === 2 || pick.multiplier === 3);
-        if (!actualCaptainPick) {
-          console.warn(`No captain multiplier for ${player.name} GW${gw} — assigning 0 diff`);
-          continue;
-        }
+        if (!actualCaptainPick) continue;
 
         const actualCapId = actualCaptainPick.element;
         const actualCapPts = liveData[gw]?.[actualCapId]?.total_points ?? 0;
@@ -122,12 +117,13 @@ export function calculateNeverGetFancy(data, liveData, salahId, playerNames = {}
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Calculates total points left on the bench outside of Bench Boost weeks.
 // Context: the worst single week of bench points wasted.
 export function calculateBenchDisaster(data) {
+  const gwIds = data._meta?.finishedGwIds || [];
   return Object.values(data)
     .filter(player => player && player.benchPoints && player.chipWeeks)
     .map(player => {
@@ -135,7 +131,7 @@ export function calculateBenchDisaster(data) {
       let totalBench = 0;
       let worstGW = { gw: null, points: 0 };
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         if (benchGW.includes(gw)) continue;
 
         const pts = player.benchPoints?.[gw] || 0;
@@ -157,7 +153,7 @@ export function calculateBenchDisaster(data) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 function formatTimeDiff(deadlineTime, transferTime) {
@@ -211,7 +207,7 @@ export function calculateEarlyBird(playerDataMap) {
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 function formatHHMMSS(deadlineTime, transferTime) {
@@ -265,5 +261,5 @@ export function calculateLateOwl(playerDataMap) {
     })
     .filter(Boolean)
     .sort((a, b) => a.score - b.score)
-    .slice(0, 3);
+    ;
 }

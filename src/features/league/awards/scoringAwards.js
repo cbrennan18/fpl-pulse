@@ -1,10 +1,12 @@
 // Scoring and performance award calculations
 
+const hasValidHistory = (player) => player && Array.isArray(player.history) && player.history.length > 0;
+
 // Calculates top total point scorers across the season.
 // Context: lowest individual GW score to show consistency risk.
 export function calculateLeagueLeaders(playerDataMap) {
   return Object.values(playerDataMap)
-    .filter(player => player && Array.isArray(player.history))
+    .filter(hasValidHistory)
     .map(player => {
       const totalPoints = player.history.reduce((sum, gw) => sum + gw.points, 0);
       const lowestScore = Math.min(...player.history.map(gw => gw.points));
@@ -19,7 +21,7 @@ export function calculateLeagueLeaders(playerDataMap) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Finds the highest single GW score for each manager.
@@ -44,7 +46,7 @@ export function calculateOneHitWonders(data) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Calculates the longest streak of consecutive overall rank improvements.
@@ -88,7 +90,7 @@ export function calculateHotStreak(data) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Identifies managers with the smallest average difference from the weekly GW average.
@@ -114,7 +116,7 @@ export function calculateMostConsistent(data) {
 
   // 3. Compute consistency data per player
   const results = Object.values(data)
-    .filter(player => player && Array.isArray(player.history))
+    .filter(hasValidHistory)
     .map(player => {
       const diffs = [];
       let closestGw = null;
@@ -147,18 +149,19 @@ export function calculateMostConsistent(data) {
       };
     });
 
-  return results.sort((a, b) => a.score - b.score).slice(0, 3);
+  return results.sort((a, b) => a.score - b.score);
 }
 
 // Calculates total minutes played by valid starters for each manager.
 // Context: most-used player (by minutes) and their total time on pitch.
 export function calculateMostMinutes(data, playerNames) {
+  const gwIds = data._meta?.finishedGwIds || [];
   return Object.entries(data)
     .filter(([key, player]) => key !== '_meta' && player && player.minutesByGW && player.picksByGW)
     .map(([_, player]) => {
       const playerTotals = {};
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         const picks = player.picksByGW[gw] || [];
         const starters = picks.filter(p => p.multiplier > 0).map(p => p.element);
 
@@ -186,19 +189,20 @@ export function calculateMostMinutes(data, playerNames) {
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    ;
 }
 
 // Calculates total disciplinary points from yellow (1pt) and red cards (3pts) earned by starting players.
 // Context: total number of yellow and red cards.
 export function calculateMostCards(playerDataMap, liveDataByGW) {
+  const gwIds = playerDataMap._meta?.finishedGwIds || [];
   const results = Object.values(playerDataMap)
     .filter(p => p && p.name && p.picksByGW)
     .map(player => {
       let yellow = 0;
       let red = 0;
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         const picks = player.picksByGW?.[gw];
         const liveStats = liveDataByGW?.[gw];
 
@@ -226,19 +230,20 @@ export function calculateMostCards(playerDataMap, liveDataByGW) {
       };
     });
 
-  return results.sort((a, b) => b.score - a.score).slice(0, 3);
+  return results.sort((a, b) => b.score - a.score);
 }
 
 // Calculates total bonus points earned from starting players.
 // Context: player with the most bonus points and their total.
 export function calculateMostBps(playerDataMap, liveDataByGW, playerNames) {
+  const gwIds = playerDataMap._meta?.finishedGwIds || [];
   const results = Object.values(playerDataMap)
     .filter(p => p && p.name && p.picksByGW)
     .map(player => {
       let totalBonus = 0;
       const bonusByPlayer = {};
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         const picks = player.picksByGW?.[gw];
         const liveStats = liveDataByGW?.[gw];
 
@@ -270,12 +275,13 @@ export function calculateMostBps(playerDataMap, liveDataByGW, playerNames) {
       };
     });
 
-  return results.sort((a, b) => b.score - a.score).slice(0, 3);
+  return results.sort((a, b) => b.score - a.score);
 }
 
 // Identifies the best-performing punt (under 5% ownership) in a single gameweek.
 // Context: player name, GW it happened, and points scored.
 export function calculateBestPunt(playerDataMap, liveDataByGW, ownershipMap, playerNames) {
+  const gwIds = playerDataMap._meta?.finishedGwIds || [];
   const punts = [];
 
   Object.values(playerDataMap)
@@ -283,7 +289,7 @@ export function calculateBestPunt(playerDataMap, liveDataByGW, ownershipMap, pla
     .forEach(player => {
       let bestPunt = { score: 0 };
 
-      for (let gw = 1; gw <= 38; gw++) {
+      for (const gw of gwIds) {
         const picks = player.picksByGW?.[gw];
         const liveStats = liveDataByGW?.[gw];
         if (!picks || !liveStats) continue;
@@ -304,6 +310,7 @@ export function calculateBestPunt(playerDataMap, liveDataByGW, ownershipMap, pla
                 punt: playerNames[pick.element] || `Player ${pick.element}`,
                 context: {
                   player: playerNames[pick.element] || `Player ${pick.element}`,
+                  ownership: ownership != null ? Math.round(ownership * 10) / 10 : null,
                   gw,
                   points: score
                 }
@@ -318,5 +325,5 @@ export function calculateBestPunt(playerDataMap, liveDataByGW, ownershipMap, pla
       }
     });
 
-  return punts.sort((a, b) => b.score - a.score).slice(0, 3);
+  return punts.sort((a, b) => b.score - a.score);
 }

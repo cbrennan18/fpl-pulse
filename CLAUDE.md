@@ -25,8 +25,11 @@ React 19 + Vite + Tailwind CSS 3 + React Router (basename `/fpl-pulse/`).
 ```
 src/
 ├── components/          # Shared UI (TopBar, BaseLayout, Logo, skeletons/)
-├── hooks/               # Shared hooks (useParallax)
-├── utils/               # Shared utilities (api.js)
+├── hooks/               # Shared hooks (useParallax, useStepProgression)
+├── utils/
+│   ├── api.js           # Centralized data fetching with retry + AbortController
+│   ├── constants.js     # Shared constants (medal colors, gradients, thresholds)
+│   └── scoringUtils.js  # Shared scoring calculations (top 5 earned/missed)
 └── features/
     ├── landing/         # Team ID input (entry point)
     ├── home/            # Team summary dashboard

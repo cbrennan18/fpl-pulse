@@ -5,51 +5,64 @@ export function getAwardLabel(awardKey, data) {
 
   switch (awardKey) {
     case 'leagueLeaders':
-      return `Lowest GW Score: ${data.lowScore} pts`;
+      return `Lowest GW: ${data.lowScore} pts`;
 
     case 'oneHitWonders':
-      return `Gameweek ${data.gw}`;
+      return `GW${data.gw}`;
 
     case 'hotStreak':
-      return `GW${data.start} to GW${data.end}`;
+      return data.start ? `GW${data.start}\u2013GW${data.end}` : '';
 
     case 'mostConsistent':
-      return `GW${data.closestGw}: closest to avg stdev (${data.closestStdev.toFixed(2)})`;
+      return `GW${data.closestGw} \u00B7 stdev ${data.closestStdev.toFixed(2)}`;
 
     case 'bestWildcard':
     case 'worstWildcard':
-      return `Wildcard in GW${data.gw}`;
+      return `GW${data.gw} wildcard`;
 
     case 'bestFreeHit':
     case 'worstFreeHit':
-      return `Free Hit in GW${data.gw}`;
+      return `GW${data.gw} free hit`;
 
     case 'bestPunt':
-      return `${data.player} in GW${data.gw}`;
+      if (data.ownership != null) {
+        return `${data.player} \u00B7 ${data.ownership}% \u00B7 GW${data.gw}`;
+      }
+      return `${data.player} \u00B7 GW${data.gw}`;
 
     case 'mostMinutes':
-      return `${data.player} – ${data.minutes} mins`;
+      return `${data.player} \u00B7 ${data.minutes} mins`;
 
     case 'mostBps':
-      return `${data.player} – ${data.bps} BPs`;
+      return `${data.player} \u00B7 ${data.bps} BPs`;
 
     case 'mostHits':
-      return `GW${data.gw}: ${data.points} pts on transfers`;
+      return `GW${data.gw} \u00B7 ${data.points} pts on transfers`;
 
     case 'neverGetFancy':
-      return `You got fancy ${data.fancyWeeksCount} times`;
+      return `${data.fancyWeeksCount} weeks`;
 
     case 'benchDisaster':
-      return `GW${data.gw} – ${data.points} pts on bench`;
+      return `GW${data.gw} \u00B7 ${data.points} pts on bench`;
 
     case 'earlyBird':
-      return `Earliest transfer: ${data.earliestFormatted}`;
+      return data.earliestFormatted;
 
     case 'lateOwl':
-      return `Latest transfer: ${data.latestFormatted}`;
+      return data.latestFormatted;
 
     case 'mostCards':
-      return `${data.yellow}Y / ${data.red}R cards total`;
+      return `${data.yellow}Y \u00B7 ${data.red}R`;
+
+    case 'biMonthly_1':
+    case 'biMonthly_2':
+    case 'biMonthly_3':
+    case 'biMonthly_4':
+    case 'biMonthly_5':
+      return '';
+
+    case 'oldDoll':
+      return `${data.totalPoints} pts`;
 
     default:
       return `TBD`;

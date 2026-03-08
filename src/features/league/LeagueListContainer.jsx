@@ -34,7 +34,9 @@ export default function LeagueListContainer() {
           teamName: data.name,
         });
 
-        const classicLeagues = (data.leagues?.classic || []).filter((l) => l.id > SYSTEM_LEAGUE_THRESHOLD);
+        const classicLeagues = (data.leagues?.classic || [])
+          .filter((l) => l.id > SYSTEM_LEAGUE_THRESHOLD)
+          .sort((a, b) => a.entry_rank - b.entry_rank);
         setLeagues(classicLeagues);
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -49,11 +51,12 @@ export default function LeagueListContainer() {
   }, [teamId]);
 
   return (
-  <LeagueList
-    manager={manager}
-    leagues={leagues}
-    loading={loading}
-    error={error}
-  />
-);
+    <LeagueList
+      manager={manager}
+      leagues={leagues}
+      loading={loading}
+      error={error}
+      teamId={teamId}
+    />
+  );
 }

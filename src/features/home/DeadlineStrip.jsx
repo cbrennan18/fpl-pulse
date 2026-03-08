@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export default function NextDeadlineCard({ deadline }) {
+export default function DeadlineStrip({ deadline }) {
   const deadlineDate = new Date(deadline.deadline_time);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -28,18 +28,23 @@ export default function NextDeadlineCard({ deadline }) {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
 
+  const { days, hours, minutes, seconds } = timeLeft;
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (days > 0 || hours > 0) parts.push(`${hours}h`);
+  if (days > 0 || hours > 0 || minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  const countdown = parts.join(' ');
+
   return (
-    <div className="bg-white shadow-md rounded-xl py-2 px-6 text-center space-y-2 w-full">
-      <p className="text-sm text-subtext font-semibold uppercase">GW{deadline.event} Deadline</p>
-      <p className="text-base font-bold text-heading">{formatted}</p>
-      <p className="text-sm font-mono text-primary">
-        {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
-      </p>
-    </div>
+    <p className="font-mono text-[11px] text-center">
+      <span className="text-[#f0b429]">GW{deadline.event} DEADLINE</span>
+      <span className="text-[#707070]"> &middot; {formatted} &middot; </span>
+      <span className="text-[#00e87a] tabular-nums">{countdown}</span>
+    </p>
   );
 }

@@ -77,7 +77,7 @@ export async function fetchEntrySeasonBlob(entryId, { signal } = {}) {
     // Handle 202 status (entry still building)
     if (response.status === 202) {
       const state = await response.json();
-      console.log(`Entry ${entryId} is ${state.status}, last GW: ${state.last_gw_processed}`);
+      console.warn(`Entry ${entryId} is ${state.status}, last GW: ${state.last_gw_processed}`);
       return null;
     }
 

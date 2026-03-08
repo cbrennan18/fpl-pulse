@@ -103,7 +103,7 @@ function transformEntry(blob, playerName, finishedGwIds, liveDataByGW) {
     picks: picksByGW,
     picksByGW,
     benchPoints,
-    transfers: blob.transfers,
+    transfers: blob.transfers || [],
     minutesByGW,
   };
 }

@@ -35,14 +35,14 @@ export default function PulseTopBar({ currentPage, totalPages, isPaused, toggleP
 
       {/* Control buttons */}
       <div className="flex justify-between items-center px-1">
-        <button onClick={onBack}>
+        <button onClick={onBack} aria-label="Go back">
           <ArrowLeftIcon size={24} weight="bold" className="text-white" />
         </button>
         <div className="flex gap-4">
-          <button onClick={togglePause}>
+          <button onClick={togglePause} aria-label={isPaused ? 'Play' : 'Pause'}>
             {isPaused ? <PlayIcon size={24} weight="bold" className="text-white" /> : <PauseIcon size={24} weight="bold" className="text-white" />}
           </button>
-          <button onClick={() => window.history.back()}>
+          <button onClick={() => window.history.back()} aria-label="Close">
             <XIcon size={24} weight="bold" className="text-white" />
           </button>
         </div>

@@ -1,10 +1,11 @@
 // Shared scoring calculations used by both league and pulse features.
 
 // Calculates top 5 players by points earned while owned.
-export function calculateTop5Earned(picksByGW, liveDataByGW, playerNames) {
+export function calculateTop5Earned(picksByGW, liveDataByGW, playerNames, finishedGwIds = []) {
+  const gwIds = finishedGwIds.length > 0 ? finishedGwIds : Object.keys(picksByGW).map(Number);
   const pointsByPlayer = {};
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of gwIds) {
     const picks = picksByGW[gw];
     const liveStats = liveDataByGW?.[gw];
 
@@ -29,11 +30,12 @@ export function calculateTop5Earned(picksByGW, liveDataByGW, playerNames) {
 }
 
 // Calculates top 5 players by points missed (not owned).
-export function calculateTop5Missed(picksByGW, liveDataByGW, playerNames) {
+export function calculateTop5Missed(picksByGW, liveDataByGW, playerNames, finishedGwIds = []) {
+  const gwIds = finishedGwIds.length > 0 ? finishedGwIds : Object.keys(picksByGW).map(Number);
   const pointsMissed = {};
   const gwMissedCount = {};
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of gwIds) {
     const picks = picksByGW[gw] || [];
     const ownedIds = new Set(picks.map(p => p.element));
     const liveStats = liveDataByGW?.[gw];

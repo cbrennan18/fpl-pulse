@@ -1,0 +1,13 @@
+<svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="pulse-mask">
+      <rect width="48" height="56" fill="white"/>
+      <path d="M16 11 L24 11 Q32 11 32 18 Q32 25 24 25 L16 25 Z" fill="white"/>
+      <polyline points="0,18 18,18 21,4 26,32 30,18 48,18"
+        stroke="black" stroke-width="3" stroke-linecap="round"
+        stroke-linejoin="round" fill="white"/>
+    </mask>
+  </defs>
+  <path d="M8 4 L8 52 L16 52 L16 32 L24 32 Q40 32 40 18 Q40 4 24 4 Z"
+    fill="#00e87a" mask="url(#pulse-mask)"/>
+</svg>

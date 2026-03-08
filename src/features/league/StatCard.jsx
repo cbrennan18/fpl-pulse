@@ -1,5 +1,4 @@
 import {
-  MedalIcon,
   TrophyIcon,
   NumberCircleOneIcon,
   FlameIcon,
@@ -16,90 +15,199 @@ import {
   WatchIcon,
   AlarmIcon,
   CardsIcon,
-  BugBeetleIcon,
 } from '@phosphor-icons/react';
-
-const styled = (Icon) => (
-  <Icon size={32} weight="duotone" className="text-current" />
-);
+import { MEDAL_COLORS } from '../../utils/constants';
 
 const iconMap = {
-  leagueLeaders: [styled(TrophyIcon)],
-  oneHitWonders: [styled(NumberCircleOneIcon)],
-  hotStreak: [styled(FlameIcon)],
-  mostConsistent: [styled(EqualsIcon)],
-  bestWildcard: [styled(ShieldCheckIcon)],
-  bestFreeHit: [styled(LightningIcon)],
-  bestPunt: [styled(SpadeIcon)],
-  mostMinutes: [styled(ClockIcon)],
-  mostBps: [styled(SoccerBallIcon)],
-  mostHits: [styled(CoinsIcon)],
-  worstWildcard: [styled(ShieldWarningIcon)],
-  worstFreeHit: [styled(ShieldWarningIcon)],
-  neverGetFancy: [styled(QuestionIcon)],
-  benchDisaster: [styled(CouchIcon)],
-  earlyBird: [styled(WatchIcon)],
-  lateOwl: [styled(AlarmIcon)],
-  mostCards: [styled(CardsIcon)],
-  placeholder: [styled(BugBeetleIcon)],
+  leagueLeaders: TrophyIcon,
+  oneHitWonders: NumberCircleOneIcon,
+  hotStreak: FlameIcon,
+  mostConsistent: EqualsIcon,
+  bestWildcard: ShieldCheckIcon,
+  bestFreeHit: LightningIcon,
+  bestPunt: SpadeIcon,
+  mostMinutes: ClockIcon,
+  mostBps: SoccerBallIcon,
+  mostHits: CoinsIcon,
+  worstWildcard: ShieldWarningIcon,
+  worstFreeHit: ShieldWarningIcon,
+  neverGetFancy: QuestionIcon,
+  benchDisaster: CouchIcon,
+  earlyBird: WatchIcon,
+  lateOwl: AlarmIcon,
+  mostCards: CardsIcon,
 };
 
-export default function StatCard({ title, description, entries = [], variant = 'fame', category }) {
-  const getMedalIcon = (i) => {
-    const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-    return (
-      <MedalIcon
-        size={16}
-        weight="duotone"
-        color={colors[i]}
-        className="inline-block mr-1 -mt-[2px]"
-      />
-    );
-  };
+const CHIP_KEYS = new Set(['bestFreeHit', 'worstFreeHit', 'bestWildcard', 'worstWildcard']);
 
-  const accentColor = variant === 'fame' ? 'border-primary' : 'border-primary-dark';
-  const iconColor = variant === 'fame' ? 'text-primary' : 'text-primary-dark';
-  const bgColor = 'bg-white';
-  const icons = iconMap[category] || [];
+const ACCENT_MAP = {
+  hotStreak: '#f0b429',
+  mostConsistent: '#f0b429',
+  bestPunt: '#9b59b6',
+  earlyBird: '#9b59b6',
+  lateOwl: '#9b59b6',
+  oldDoll: '#3b82f6',
+};
+
+const awardAccent = (category, variant) =>
+  ACCENT_MAP[category]
+  || (category.startsWith('biMonthly_') ? '#f0b429' : null)
+  || (variant === 'fame' ? '#00e87a' : '#e5484d');
+
+export default function StatCard({
+  title, titleSuffix, description, entries = [], variant = 'fame', category,
+  userPosition, userName, statusPill, isUpcoming, upcomingStartGw,
+}) {
+  const accent = awardAccent(category, variant);
+  const Icon = iconMap[category];
+  const winner = entries[0];
+  const runnersUp = entries.slice(1, 3);
+  const userInTop3 = entries.slice(0, 3).some((e) => e.name === userName);
+  const isChipAward = CHIP_KEYS.has(category);
+
+  const userInEntries = entries.some((e) => e.name === userName);
+  const userEntry = entries.find((e) => e.name === userName);
 
   return (
-    <div className={`rounded-2xl shadow-md p-4 w-full border-l-4 ${accentColor} ${bgColor}`}>
-      <div className="flex justify-between items-start mb-1">
-        <div className="flex-1">
-          <h3 className="text-base font-semibold text-text">{title}</h3>
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        backgroundColor: '#141414',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderTop: `2px solid ${accent}`,
+        opacity: isUpcoming ? 0.5 : 1,
+      }}
+    >
+      {/* Header */}
+      <div className="px-4 pt-4 pb-2 flex items-start justify-between">
+        <div className="min-w-0">
+          <h3 className="font-display text-[22px] text-white leading-tight">
+            {title}
+            {titleSuffix && (
+              <span className="font-mono text-[10px] text-[#525252] ml-2 align-middle">{titleSuffix}</span>
+            )}
+          </h3>
           {description && (
-            <p className="text-subtext text-xs mt-[-2px]">{description}</p>
+            <p className="font-body font-normal text-[11px] text-[#525252] mt-0.5">{description}</p>
           )}
         </div>
-        <div className={`flex items-center gap-1 ${iconColor} text-opacity-80`}>
-          {icons.map((Icon, idx) => (
-            <div key={idx} className="flex items-center justify-center">{Icon}</div>
-          ))}
+        <div className="flex items-center gap-2 shrink-0 ml-3 mt-1">
+          {statusPill}
+          {Icon && <Icon size={36} weight="light" style={{ color: accent }} />}
         </div>
       </div>
 
-      {entries.length > 0 ? (
-        <div className="grid grid-cols-[1fr_auto] gap-y-2 gap-x-4 items-center">
-          {entries.map((entry, i) => (
-            <div key={`${entry.name}-${entry.score}`} className="col-span-2">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1">
-                  {i < 3 && getMedalIcon(i)}
-                  <span>{entry.name}</span>
-                </div>
-                <div className="text-right font-semibold">{entry.value}</div>
+      {/* Entries */}
+      <div className="px-4 pb-4">
+        {isUpcoming ? (
+          <div className="py-6 flex items-center justify-center">
+            <span className="font-display text-[24px] text-[#525252]">
+              STARTS GW{upcomingStartGw}
+            </span>
+          </div>
+        ) : winner ? (
+          <>
+            {/* Winner row */}
+            <div className="flex items-center py-2" style={{ borderLeft: '2px solid transparent' }}>
+              <span className="font-mono text-[13px] tabular-nums text-[#525252] w-[28px] shrink-0 text-right pr-2">1</span>
+              <div
+                className="w-2 h-2 rounded-full shrink-0 mr-2"
+                style={{ backgroundColor: MEDAL_COLORS[0] }}
+              />
+              <div className="flex-1 min-w-0">
+                <span className="font-body font-medium text-[13px] text-white leading-tight">
+                  {winner.name}
+                </span>
+                {winner.contextString && (
+                  <p className="font-mono text-[10px] text-[#525252] mt-0.5">{winner.contextString}</p>
+                )}
               </div>
-              {entry.contextString && (
-                <div className="text-xs opacity-80 italic">
-                  {entry.contextString}
-                </div>
-              )}
+              <span
+                className="font-display text-[36px] leading-[0.85] shrink-0 ml-3"
+                style={{ color: accent }}
+              >
+                {winner.value}
+              </span>
             </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-subtext text-sm">Calculating...</p>
-      )}
+
+            {/* Runners up */}
+            {runnersUp.map((entry, i) => (
+              <div
+                key={`${entry.name}-${entry.score}`}
+                className="flex items-center py-1.5"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderLeft: '2px solid transparent' }}
+              >
+                <span className="font-mono text-[13px] tabular-nums text-[#525252] w-[28px] shrink-0 text-right pr-2">{i + 2}</span>
+                <div
+                  className="w-2 h-2 rounded-full shrink-0 mr-2"
+                  style={{ backgroundColor: MEDAL_COLORS[i + 1] }}
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="font-body font-medium text-[13px] text-[#a8a8a8] leading-tight">
+                    {entry.name}
+                  </span>
+                  {entry.contextString && (
+                    <p className="font-mono text-[10px] text-[#525252] mt-0.5">{entry.contextString}</p>
+                  )}
+                </div>
+                <span className="font-mono text-[13px] text-[#a8a8a8] shrink-0 ml-3">
+                  {entry.value}
+                </span>
+              </div>
+            ))}
+
+            {/* User position row — shown when user is NOT in top 3 */}
+            {!userInTop3 && (
+              <>
+                {isChipAward && !userInEntries ? (
+                  <div
+                    className="flex items-center min-h-[40px] py-1.5"
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderLeft: '2px solid #525252' }}
+                  >
+                    <span className="font-mono text-[10px] text-[#525252] pl-[28px]">
+                      YOU DIDN&apos;T USE THIS CHIP
+                    </span>
+                  </div>
+                ) : category === 'hotStreak' && userEntry?.score === 0 ? (
+                  <div
+                    className="flex items-center min-h-[40px] py-1.5"
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderLeft: '2px solid #525252' }}
+                  >
+                    <span className="font-mono text-[10px] text-[#525252] pl-[28px]">
+                      NO STREAK THIS SEASON
+                    </span>
+                  </div>
+                ) : userPosition ? (
+                  <div
+                    className="flex items-center py-1.5"
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderLeft: '2px solid #00e87a' }}
+                  >
+                    <span className="font-mono text-[13px] tabular-nums text-[#525252] w-[28px] shrink-0 text-right pr-2">
+                      {userPosition}
+                    </span>
+                    <div className="w-2 h-2 shrink-0 mr-2" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-body font-medium text-[13px] text-[#00e87a] leading-tight">
+                        {userName}
+                      </span>
+                      {userEntry?.contextString && (
+                        <p className="font-mono text-[10px] text-[#525252] mt-0.5">{userEntry.contextString}</p>
+                      )}
+                    </div>
+                    {userEntry && (
+                      <span className="font-mono text-[13px] text-[#a8a8a8] shrink-0 ml-3">
+                        {userEntry.value}
+                      </span>
+                    )}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </>
+        ) : (
+          <p className="font-mono text-[11px] text-[#525252]">Calculating...</p>
+        )}
+      </div>
     </div>
   );
 }

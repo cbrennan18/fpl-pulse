@@ -145,9 +145,9 @@ export default function PulseContainer() {
           liveDataByGW,
           entryTransfers: entryTransfersData,
           playerPriceHistory: playerPriceHistory,
+          finishedGwIds,
         });
 
-        console.log('Pulse Data:', pulse);
         setPulseData(pulse);
       } catch (err) {
         if (err.name === 'AbortError') return;

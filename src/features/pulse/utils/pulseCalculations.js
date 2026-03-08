@@ -82,7 +82,7 @@ function buildPage2_RankJourney(data) {
 
 // === Page 3: Captaincy & MVP ===
 function buildPage3_CaptaincyMVP(data) {
-  const { picksByGW, liveDataByGW, bootstrap } = data;
+  const { picksByGW, liveDataByGW, bootstrap, finishedGwIds = [] } = data;
 
   const playerNames = {};
   bootstrap.elements.forEach(el => {
@@ -93,10 +93,10 @@ function buildPage3_CaptaincyMVP(data) {
   });
 
   // 1: Calculate top 5 MVPs
-  const top5Earned = calculateTop5Earned(picksByGW, liveDataByGW, playerNames);
+  const top5Earned = calculateTop5Earned(picksByGW, liveDataByGW, playerNames, finishedGwIds);
 
   // 2: Calculate top 5 Missed
-  const top5Missed = calculateTop5Missed(picksByGW, liveDataByGW, playerNames);
+  const top5Missed = calculateTop5Missed(picksByGW, liveDataByGW, playerNames, finishedGwIds);
 
   // 3: Wrapped narrative line
   const narrative = pulseTextTemplates.page3_captaincyMVP({
@@ -164,7 +164,8 @@ function buildPage4_Transfers(data) {
 
 // === Page 5: Transfer Hits and Misses ===
 function buildPage5_TransfersHitsMisses(data) {
-  const { playerPriceHistory, bootstrap, picksByGW, entryHistory, liveDataByGW, playerNames } = data;
+  const { playerPriceHistory, bootstrap, picksByGW, entryHistory, liveDataByGW, playerNames, finishedGwIds = [] } = data;
+  const lastGw = finishedGwIds.length > 0 ? Math.max(...finishedGwIds) : 38;
 
   const freeHitWeeks = entryHistory?.chips
     ?.filter(c => c.name === "freehit")
@@ -173,7 +174,7 @@ function buildPage5_TransfersHitsMisses(data) {
   const playerStints = [];
   const activeStints = {};
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     const picks = picksByGW[gw] || [];
     const ownedIds = picks.map(p => p.element);
 
@@ -195,7 +196,7 @@ function buildPage5_TransfersHitsMisses(data) {
           playerId,
           playerName: bootstrap.elements.find(p => p.id === playerId)?.web_name,
           gwIn: gw,
-          gwOut: 38,
+          gwOut: lastGw,
           weeksHeld: 1, 
           points: liveDataByGW[gw]?.[playerId]?.total_points || 0,
           priceAtGwIn: gwPrice,
@@ -244,10 +245,10 @@ function buildPage5_TransfersHitsMisses(data) {
   const playerSeasonData = bootstrap.elements.map(el => {
     const priceByGW = {};
     const pointsByGW = {};
-    
+
     let prevPrice = null;
-    
-    for (let gw = 1; gw <= 38; gw++) {
+
+    for (const gw of finishedGwIds) {
       const currentPrice = playerPriceHistory?.[el.id]?.[gw] ?? prevPrice;
       priceByGW[gw] = currentPrice;
       prevPrice = currentPrice;
@@ -458,11 +459,12 @@ function buildPage6_Streaks(data) {
 
 // === Page 7: Player Loyalty ===
 function buildPage7_PlayerLoyalty(data) {
-  const { picksByGW, liveDataByGW, entryTransfers, playerNames } = data;
+  const { picksByGW, liveDataByGW, entryTransfers, playerNames, finishedGwIds = [] } = data;
+  const lastGw = finishedGwIds.length > 0 ? Math.max(...finishedGwIds) : 38;
 
   // 1 Most Weeks Owned
   const ownershipCounts = {};
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     const picks = picksByGW[gw] || [];
     picks.forEach(pick => {
       const pid = pick.element;
@@ -481,7 +483,7 @@ function buildPage7_PlayerLoyalty(data) {
 
   // 2 Most Weeks Benched
   const benchCounts = {};
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     const picks = picksByGW[gw] || [];
     picks.forEach(pick => {
       if (pick.multiplier === 0) {
@@ -524,7 +526,7 @@ function buildPage7_PlayerLoyalty(data) {
   if (mostTransferredInId) {
     const gwsIn = transferHistoryByPlayer[mostTransferredInId] || [];
     gwsIn.forEach(gwIn => {
-      for (let gw = gwIn; gw <= 38; gw++) {
+      for (let gw = gwIn; gw <= lastGw; gw++) {
         const picks = picksByGW[gw] || [];
         const owned = picks.some(pick => pick.element === parseInt(mostTransferredInId));
         if (owned) {
@@ -570,7 +572,7 @@ function buildPage7_PlayerLoyalty(data) {
 
 // === Page 8: Bench and Chip Fails ===
 function buildPage8_BenchAndChipFails(data) {
-  const { picksByGW, liveDataByGW, entryHistory } = data;
+  const { picksByGW, liveDataByGW, entryHistory, finishedGwIds = [] } = data;
 
   const chipsUsed = entryHistory?.chips || [];
 
@@ -579,7 +581,7 @@ function buildPage8_BenchAndChipFails(data) {
   let tcPoints = 0;
   const captainWeeks = [];
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     const picks = picksByGW[gw] || [];
 
     const tcPick = picks.find(pick => pick.multiplier === 3);
@@ -623,7 +625,7 @@ function buildPage8_BenchAndChipFails(data) {
 
   const benchWeeks = [];
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     if (gw === bbWeek) continue; // skip actual BB week
     const benchPts = (picksByGW[gw] || []).filter(p => p.multiplier === 0).reduce((sum, p) => {
       return sum + (liveDataByGW[gw]?.[p.element]?.total_points || 0);
@@ -662,7 +664,7 @@ function buildPage8_BenchAndChipFails(data) {
 
 // === Page 9: Team of the Year ===
 function buildPage9_Outro(data) {
-  const { picksByGW, liveDataByGW, playerNames, bootstrap } = data;
+  const { picksByGW, liveDataByGW, playerNames, bootstrap, finishedGwIds = [] } = data;
 
   const playerMap = {};
   const playerDisplayName = {};
@@ -676,7 +678,7 @@ function buildPage9_Outro(data) {
 
   const playerSummary = {};
 
-  for (let gw = 1; gw <= 38; gw++) {
+  for (const gw of finishedGwIds) {
     const picks = picksByGW[gw] || [];
     picks.forEach(pick => {
       const pid = pick.element;

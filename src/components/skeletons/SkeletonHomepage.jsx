@@ -1,39 +1,51 @@
-// src/components/HomepageSkeleton.jsx
+import { HEADER_GRADIENT } from '../../utils/constants';
 
 export default function SkeletonHomepage() {
   return (
     <div className="animate-pulse">
-      {/* Top green section */}
-      <div className="bg-primary-dark w-full h-[100vw] rounded-b-3xl px-6 pt-safe-bar pb-24 text-white relative z-0">
-        <div className="flex justify-between gap-6">
-          <div className="space-y-2">
-            <div className="h-3 w-24 bg-white/30 rounded" />
-            <div className="h-5 w-20 bg-white/60 rounded" />
-            <div className="h-3 w-32 bg-white/30 rounded" />
+      {/* Header + chart seamless */}
+      <div style={{ background: HEADER_GRADIENT }}>
+        <div className="px-5 pt-safe-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="w-6 h-6 rounded bg-white/10" />
+            <div className="h-4 w-32 rounded bg-white/10" />
+            <div className="w-6 h-6 rounded bg-white/10" />
           </div>
-          <div className="text-right space-y-2">
-            <div className="h-3 w-24 bg-white/30 rounded ml-auto" />
-            <div className="h-5 w-20 bg-white/60 rounded ml-auto" />
-            <div className="h-3 w-32 bg-white/30 rounded ml-auto" />
+          <div className="grid grid-cols-2 gap-4 pb-4">
+            <div className="space-y-2">
+              <div className="h-2 w-20 rounded bg-white/10" />
+              <div className="h-12 w-28 rounded bg-white/10" />
+              <div className="h-2 w-24 rounded bg-white/10" />
+            </div>
+            <div className="space-y-2 flex flex-col items-end">
+              <div className="h-2 w-20 rounded bg-white/10" />
+              <div className="h-12 w-24 rounded bg-white/10" />
+              <div className="h-2 w-20 rounded bg-white/10" />
+            </div>
           </div>
         </div>
-
-        {/* Chart placeholder */}
-        <div className="mt-6 h-28 bg-white/20 rounded" />
+        <div className="h-40" />
       </div>
 
-      {/* Floating buttons */}
-      <div className="absolute left-0 right-0 -bottom-6 px-4 flex gap-4 z-20">
-        <div className="flex-1 bg-white rounded-xl h-[100px] shadow-md" />
-        <div className="flex-1 bg-subtle rounded-xl h-[100px] shadow-inner" />
+      {/* Rising / Falling */}
+      <div className="flex items-center justify-center gap-5 py-1">
+        <div className="h-10 w-14 rounded bg-white/10" />
+        <div className="h-6 w-px bg-white/10" />
+        <div className="h-10 w-14 rounded bg-white/10" />
       </div>
 
-      {/* Below content placeholders */}
-      <div className="mt-32 px-4 space-y-4">
-        <div className="bg-white rounded-xl h-[80px] w-full" />
-        <div className="bg-white rounded-xl h-[60px] w-full" />
-        <div className="bg-white rounded-xl h-[60px] w-full" />
-        <div className="bg-white rounded-xl h-[60px] w-full" />
+      {/* GW Summary */}
+      <div className="mx-4 mt-1 bg-[#141414] rounded-xl h-[60px]" />
+
+      {/* Banners */}
+      <div className="px-4 mt-2.5 space-y-2">
+        <div className="bg-[#141414] rounded-xl h-[100px] border-l-2 border-white/10" />
+        <div className="bg-[#141414] rounded-xl h-[100px] border-l-2 border-white/10" />
+      </div>
+
+      {/* Deadline */}
+      <div className="py-3">
+        <div className="h-3 w-52 rounded bg-white/10 mx-auto" />
       </div>
     </div>
   );

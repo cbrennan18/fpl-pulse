@@ -59,6 +59,8 @@ export default function HomepageContainer() {
           overallRank: latestGw.overall_rank || 0,
           lastGwPoints: latestGw.points || 0,
           lastGwRank: latestGw.gw_rank || 0,
+          lastGwTransfers: latestGw.event_transfers || 0,
+          lastGwHits: Math.floor((latestGw.event_transfers_cost || 0) / 4),
           latestGwNumber: latestGwNum,
         });
 
@@ -69,8 +71,10 @@ export default function HomepageContainer() {
           total_points: blob.gw_summaries[gw].total,
           rank: blob.gw_summaries[gw].gw_rank,
           overall_rank: blob.gw_summaries[gw].overall_rank,
-          value: blob.gw_summaries[gw].value / 10,  // IMPORTANT: Divide by 10!
-          bank: blob.gw_summaries[gw].bank / 10,     // IMPORTANT: Divide by 10!
+          value: blob.gw_summaries[gw].value / 10,
+          bank: blob.gw_summaries[gw].bank / 10,
+          event_transfers: blob.gw_summaries[gw].event_transfers || 0,
+          event_transfers_cost: blob.gw_summaries[gw].event_transfers_cost || 0,
         }));
         setHistory(history);
       } catch (err) {

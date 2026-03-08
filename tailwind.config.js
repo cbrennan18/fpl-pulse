@@ -24,6 +24,9 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],
+        display: ['Bebas Neue', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'monospace'],
       },
     },
   },

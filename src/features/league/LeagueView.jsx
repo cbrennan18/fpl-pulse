@@ -1,138 +1,239 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import BaseLayout from '../../components/BaseLayout';
-import TopBar from '../../components/TopBar';
-import LeagueStandings from './LeagueStandings';
+import { motion } from 'framer-motion';
+import { ArrowLeftIcon } from '@phosphor-icons/react';
+import PulseLogo from '../../assets/logo-mark.svg';
+import MedalTable from './MedalTable';
 import AwardsCard from './AwardsCard';
 import SkeletonLeagueView from '../../components/skeletons/SkeletonLeagueView';
-import useParallax from '../../hooks/useParallax';
-import {
-  ArrowUpIcon,
-  ArrowDownIcon,
-  MinusIcon,
-} from '@phosphor-icons/react';
+import { HEADER_GRADIENT } from '../../utils/constants';
 
-export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error }) {
+const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
+const fadeUp = (i) => ({
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: stagger(i),
+});
+
+const rankDisplayColor = (rank) => {
+  if (rank === 1) return '#f0b429';
+  if (rank === 2) return '#9fb3be';
+  if (rank === 3) return '#a0522d';
+  return '#ffffff';
+};
+
+const AWARD_LABELS = {
+  leagueLeaders: 'No Hitter',
+  oneHitWonders: 'One Week Wonder',
+  hotStreak: 'Hot Streak',
+  mostConsistent: 'Most Consistent',
+  bestWildcard: 'Best Wildcard',
+  bestFreeHit: 'Best Free Hit',
+  bestPunt: 'Best Punt',
+  mostMinutes: 'Most Minutes',
+  mostBps: 'Most BPs',
+  mostHits: 'Harry Redknapp Wheeler Dealer',
+  worstWildcard: 'Worst Wildcard',
+  worstFreeHit: 'Worst Free Hit',
+  neverGetFancy: 'Never Get Fancy',
+  benchDisaster: 'Divock Origi Award',
+  earlyBird: 'Early Bird',
+  lateOwl: 'AndyFPL Prize',
+  mostCards: 'Most Cards',
+  biMonthly_1: 'Aug–Sep',
+  biMonthly_2: 'Oct–Nov',
+  biMonthly_3: 'Dec–Jan',
+  biMonthly_4: 'Feb–Mar',
+  biMonthly_5: 'Apr–May',
+  oldDoll: 'Old Doll Prize',
+};
+
+/**
+ * Build medal table data: count gold/silver/bronze per manager across all award categories.
+ * Returns sorted array of { name, gold, silver, bronze, total }.
+ */
+function buildMedalTable(awards, countingKeys, standings) {
+  const counts = {};
+
+  // Seed with all league members so everyone gets a row
+  if (standings) {
+    for (const s of standings) {
+      counts[s.player_name] = { name: s.player_name, gold: 0, silver: 0, bronze: 0, leagueRank: s.rank };
+    }
+  }
+
+  for (const [key, entries] of Object.entries(awards)) {
+    if (!Array.isArray(entries) || !AWARD_LABELS[key]) continue;
+    if (countingKeys && !countingKeys.has(key)) continue;
+    entries.slice(0, 3).forEach((entry, idx) => {
+      if (!counts[entry.name]) counts[entry.name] = { name: entry.name, gold: 0, silver: 0, bronze: 0, leagueRank: null };
+      if (idx === 0) counts[entry.name].gold++;
+      else if (idx === 1) counts[entry.name].silver++;
+      else if (idx === 2) counts[entry.name].bronze++;
+    });
+  }
+
+  return Object.values(counts)
+  .map((m) => ({ ...m, total: m.gold + m.silver + m.bronze }))
+  .sort(
+    (a, b) =>
+      b.gold - a.gold ||
+      b.silver - a.silver ||
+      b.bronze - a.bronze ||
+      (a.leagueRank ?? 999) - (b.leagueRank ?? 999)
+  );
+}
+
+/**
+ * Compute user's position (1-indexed) in each award category.
+ * Returns { [awardKey]: number | null }.
+ */
+function getUserPositions(awards, userName) {
+  const positions = {};
+  if (!userName) return positions;
+
+  for (const [key, entries] of Object.entries(awards)) {
+    if (!Array.isArray(entries) || !AWARD_LABELS[key]) continue;
+    const idx = entries.findIndex((e) => e.name === userName);
+    positions[key] = idx >= 0 ? idx + 1 : null;
+  }
+  return positions;
+}
+
+export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error, leagueConfig, biMonthlyMeta }) {
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get('teamId');
   const navigate = useNavigate();
-  useParallax('parallax-bg');
 
   if (loading) {
     return (
-      <BaseLayout>
+      <div className="min-h-screen bg-[#0a0a0a]">
         <SkeletonLeagueView />
-      </BaseLayout>
+      </div>
     );
   }
 
   if (error || !league) {
     return (
-      <BaseLayout>
-        <div className="text-center mt-10 text-sm text-danger">
-          League data could not be loaded. Please try again later.
-        </div>
-      </BaseLayout>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <p className="font-body text-sm text-[#e5484d]">League data could not be loaded.</p>
+      </div>
     );
   }
 
   const {
     name,
-    avg_est_rank,
-    avg_est_rank_prev,
     entry_rank,
-    rank_change,
     points_behind,
-    points_behind_change,
   } = league;
 
-  const avgRankChange = Number.isFinite(avg_est_rank) && Number.isFinite(avg_est_rank_prev)
-    ? avg_est_rank_prev - avg_est_rank
-    : null;
+  // Compute user data for child components
+  const user = standings.find((e) => Number(e.entry) === Number(managerTeamId));
+  const userName = user?.player_name;
+  const isAwardsReady = awards && typeof awards === 'object' && !Array.isArray(awards);
+  const medalTable = isAwardsReady ? buildMedalTable(awards, leagueConfig?.countingAwardKeys, standings) : [];
+  const userPositions = isAwardsReady ? getUserPositions(awards, userName) : {};
 
-  const format = (val) =>
-    typeof val === 'number' ? val.toLocaleString() : val ?? '—';
+  // Medal rank + breakdown for header
+  const userMedalIdx = medalTable.findIndex((m) => m.name === userName);
+  const userMedalRank = userMedalIdx >= 0 ? userMedalIdx + 1 : null;
+  const userMedals = userMedalIdx >= 0 ? medalTable[userMedalIdx] : null;
+
+  // Leader info for points gap caption
+  const sorted = [...standings].sort((a, b) => a.rank - b.rank);
+  const leader = sorted[0];
+  const leaderName = leader?.player_name;
+  const isLeading = entry_rank === 1;
 
   return (
-    <BaseLayout>
-      <TopBar
-        title={name}
-        showBackButton={true}
-        onBack={() => navigate(`/mini-leagues?id=${teamId}`)}
-      />
-      <div className="pt-safe-bar" />
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
+      {/* Navigation bar */}
+      <motion.div {...fadeUp(0)}>
+        <div className="px-5 pt-safe-6">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => navigate(`/mini-leagues?id=${teamId}`)}>
+              <ArrowLeftIcon size={28} weight="light" className="text-white/55" />
+            </button>
+            <span className="font-body font-semibold text-[15px] text-white text-center max-w-[65%] leading-tight">
+              {name}
+            </span>
+            <img src={PulseLogo} alt="FPL Pulse" className="w-6 h-6" />
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Green card + floating grid wrapper */}
-      <div className="relative z-0">
-        <div
-          id="parallax-bg"
-          className="absolute top-0 left-0 w-full h-[100vw] bg-primary-dark rounded-b-3xl z-0 transition-transform duration-100 ease-out"
-        />
-        <div className="relative z-10 text-white px-6 pt-safe-bar pb-24">
-          {/* Flex row of key stats (top 5 avg + user rank), spaced apart */}
-          <div className="flex justify-between items-start gap-6">
+      {/* Header block — gradient */}
+      <motion.div {...fadeUp(1)}>
+        <div style={{ background: HEADER_GRADIENT }}>
+          <div className="grid grid-cols-2 gap-4 px-5 pb-2 pt-2">
+            {/* Medal Rank */}
             <div>
-              <p className="text-xs uppercase opacity-80">Top 5 Avg OR</p>
-              <p className="text-lg font-semibold">{format(avg_est_rank)}</p>
-              {Number.isFinite(avgRankChange) && (
-                <p className="text-xs opacity-80 italic flex items-center gap-1">
-                  Chg: {Math.abs(avgRankChange)}
-                  {avgRankChange > 0 && <ArrowUpIcon size={12} weight="bold" />}
-                  {avgRankChange < 0 && <ArrowDownIcon size={12} weight="bold" />}
-                  {avgRankChange === 0 && <MinusIcon size={12} weight="bold" />}
+              <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] mb-1">Medal Rank</p>
+              <p
+                className="font-display text-[80px] leading-[0.85]"
+                style={{ color: rankDisplayColor(userMedalRank) }}
+              >
+                {userMedalRank ?? '\u2014'}
+              </p>
+              {userMedals && (
+                <p className="font-mono text-[11px] mt-1.5">
+                  <span style={{ color: '#f0b429' }}>{userMedals.gold}</span>
+                  <span className="text-[#525252]"> &middot; </span>
+                  <span style={{ color: '#9fb3be' }}>{userMedals.silver}</span>
+                  <span className="text-[#525252]"> &middot; </span>
+                  <span style={{ color: '#a0522d' }}>{userMedals.bronze}</span>
                 </p>
               )}
             </div>
+
+            {/* League Rank */}
             <div className="text-right">
-              <p className="text-xs uppercase opacity-80">Your League Rank</p>
-              <p className="text-lg font-semibold flex items-center justify-end gap-1">
-                {format(entry_rank)}
-                {Number.isFinite(rank_change) && (
-                  <span className="text-xs opacity-80 flex items-center gap-1">
-                    (
-                    {Math.abs(rank_change)}
-                    {rank_change > 0 && <ArrowUpIcon size={12} weight="bold" />}
-                    {rank_change < 0 && <ArrowDownIcon size={12} weight="bold" />}
-                    {rank_change === 0 && <MinusIcon size={12} weight="bold" />}
-                    )
-                  </span>
-                )}
+              <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] mb-1">League Rank</p>
+              <p className="font-display text-[80px] leading-[0.85] text-white">
+                {entry_rank ?? '\u2014'}
               </p>
-              <p className="text-xs opacity-80 italic flex items-center justify-end gap-1">
-                Behind Leader: {format(points_behind)} pts
-                {Number.isFinite(points_behind_change) && (
-                  <span className="flex items-center gap-1">
-                    (<span>{Math.abs(points_behind_change)}</span>
-                    {points_behind_change > 0 && <ArrowUpIcon size={12} weight="bold" />}
-                    {points_behind_change < 0 && <ArrowDownIcon size={12} weight="bold" />}
-                    {points_behind_change === 0 && <MinusIcon size={12} weight="bold" />}
-                    )
-                  </span>
-                )}
+              <p className="font-mono text-[11px] text-[#525252] mt-1.5">
+                {isLeading
+                  ? `Leading by ${Math.abs((sorted[1]?.total ?? 0) - (sorted[0]?.total ?? 0))} pts`
+                  : `${points_behind} pts behind ${leaderName}`}
               </p>
             </div>
           </div>
 
-          {/* Replace this with Awards or Chart if needed */}
-          <div className="mt-6" />
+          {/* GW context line — inside header block */}
+          {league.current_gw && (
+            <p className="font-mono text-[9px] text-[#525252] px-5 mt-2 pb-3">
+              UPDATED AFTER GW{league.current_gw}
+            </p>
+          )}
         </div>
+      </motion.div>
 
-        {/* Floating content overlaps bottom of green card */}
-        <div className="relative px-4 -translate-y-24 z-20">
-          <div className="space-y-6">
-            <LeagueStandings
-              standings={standings}
-              league={league}
-              highlightEntry={managerTeamId}
-            />
-            {isSampled && (
-              <div className="text-center text-sm italic text-subtext">
-                Only top 30 managers sampled for award calculations.
-              </div>
-            )}
-            <AwardsCard awards={awards} />
-          </div>
-        </div>
-      </div>
-    </BaseLayout>
+      {/* Spacer between header and medal table */}
+      <div className="h-5" />
+
+      {/* Medal Table */}
+      {medalTable.length > 0 && (
+        <motion.div {...fadeUp(3)}>
+          <MedalTable
+            medalTable={medalTable}
+            standings={standings}
+            userName={userName}
+          />
+        </motion.div>
+      )}
+
+      {/* Awards */}
+      <motion.div {...fadeUp(4)}>
+        <AwardsCard
+          awards={awards}
+          isSampled={isSampled}
+          userName={userName}
+          userPositions={userPositions}
+          currentGw={league.current_gw}
+          leagueConfig={leagueConfig}
+          biMonthlyMeta={biMonthlyMeta}
+        />
+      </motion.div>
+    </div>
   );
 }

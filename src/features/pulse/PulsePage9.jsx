@@ -105,7 +105,7 @@ export default function PulsePage9({ pageData }) {
                     ].map(({ label, players }, idx) => (
                       <div key={idx} className="flex justify-center gap-1.5 flex-wrap">
                         {players.map((player, i) => (
-                        <div key={`${player.displayName}-${i}`} className="px-0.5 text-center flex flex-col justify-between shrink-0">
+                        <div key={player.playerId || `${player.displayName}-${i}`} className="px-0.5 text-center flex flex-col justify-between shrink-0">
                             <TShirtIcon size={48} weight="thin" className="mx-auto text-white" />
 
                             <div className="text-[12px] font-bold leading-tight text-white break-words text-center line-clamp-2">
