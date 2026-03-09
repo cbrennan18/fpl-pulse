@@ -63,7 +63,7 @@ const AWARD_LABELS = {
  * Build medal table data: count gold/silver/bronze per manager across all award categories.
  * Returns sorted array of { name, gold, silver, bronze, total }.
  */
-function buildMedalTable(awards, countingKeys, standings) {
+function buildMedalTable(awards, countingKeys, standings, periodMeta) {
   const counts = {};
 
   // Seed with all league members so everyone gets a row
@@ -76,6 +76,8 @@ function buildMedalTable(awards, countingKeys, standings) {
   for (const [key, entries] of Object.entries(awards)) {
     if (!Array.isArray(entries) || !AWARD_LABELS[key]) continue;
     if (countingKeys && !countingKeys.has(key)) continue;
+    // Skip periodic awards that haven't started yet
+    if (periodMeta?.[key]?.status === 'upcoming') continue;
     entries.slice(0, 3).forEach((entry, idx) => {
       if (!counts[entry.name]) counts[entry.name] = { name: entry.name, gold: 0, silver: 0, bronze: 0, leagueRank: null };
       if (idx === 0) counts[entry.name].gold++;
@@ -163,7 +165,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
   const user = standings.find((e) => Number(e.entry) === Number(managerTeamId));
   const userName = user?.player_name;
   const isAwardsReady = awards && typeof awards === 'object' && !Array.isArray(awards);
-  const medalTable = isAwardsReady ? buildMedalTable(awards, leagueConfig?.countingAwardKeys, standings) : [];
+  const medalTable = isAwardsReady ? buildMedalTable(awards, leagueConfig?.countingAwardKeys, standings, biMonthlyMeta) : [];
   const userPositions = isAwardsReady ? getUserPositions(awards, userName) : {};
 
   // Medal rank + breakdown for header
