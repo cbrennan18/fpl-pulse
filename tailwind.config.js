@@ -21,6 +21,9 @@ module.exports = {
         subtle: '#FAFAFA',
         danger: '#EF4444',
         muted: '#f1f5f9',
+        accent: {
+          purple: '#8B5CF6',
+        },
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],

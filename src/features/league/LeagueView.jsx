@@ -5,6 +5,7 @@ import { ArrowLeftIcon } from '@phosphor-icons/react';
 import PulseLogo from '../../assets/logo-mark.svg';
 import MedalTable from './MedalTable';
 import AwardsCard from './AwardsCard';
+import GwAwardsCard from './awards-share/GwAwardsCard';
 import SkeletonLeagueView from '../../components/skeletons/SkeletonLeagueView';
 import { HEADER_GRADIENT } from '../../utils/constants';
 import useUmami from '../../hooks/useUmami';
@@ -245,6 +246,19 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
 
       {/* Spacer between header and medal table */}
       <div className="h-5" />
+
+      {/* GW Awards share card */}
+      {isAwardsReady && (
+        <motion.div {...fadeUp(2.5)}>
+          <GwAwardsCard
+            awards={awards}
+            medalTable={medalTable}
+            gameweek={league.current_gw}
+            leagueName={name}
+            biMonthlyMeta={biMonthlyMeta}
+          />
+        </motion.div>
+      )}
 
       {/* Medal Table */}
       {medalTable.length > 0 && (
