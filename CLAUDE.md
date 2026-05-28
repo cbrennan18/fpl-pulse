@@ -36,8 +36,11 @@ src/
     ├── league/          # Mini-league browser + standings + awards
     │   └── awards/      # Award calculation modules (scoring, chip, transfer)
     └── pulse/           # Story-style season recap (self-contained)
-        └── utils/       # pulseCalculations.js, pulseTextTemplates.js
+        └── utils/       # pulseCalculations.js, pulseTextTemplates.js, careerRating.js,
+                         #   career-rating-v1.js + rating-to-rank-v1.json (frozen artifacts)
 ```
+
+**Career-rating artifacts:** `features/pulse/utils/career-rating-v1.js` and `rating-to-rank-v1.json` are **frozen, versioned** copies lifted from the sibling `fpl-career-rating/` repo (do not hand-edit — changes go upstream, then re-copy; the `-v1` suffix lets a future fpl-elo model swap in via a one-line import change). `careerRating.js` is the in-app wrapper around them.
 
 **Pattern:** Container/Presentational — `*Container.jsx` files handle data fetching, sibling page components handle layout and rendering.
 
@@ -46,7 +49,7 @@ src/
 - `/home` → Homepage (team summary, rank chart)
 - `/mini-leagues` → League list
 - `/mini-league` → League detail (standings + awards)
-- `/pulse` → Pulse (swipeable story-style GW recap, PulsePage1–10)
+- `/pulse` → Pulse (swipeable story-style GW recap, PulsePage1–10 + a career-rating chapter as page 11)
 
 **Data fetching:** All FPL API calls go through `src/utils/api.js`, which wraps the worker's endpoints (configurable via `VITE_API_BASE` env var, defaults to `fpl-pulse.ciaranbrennan18.workers.dev`). Two endpoint styles: `/fpl/*` for proxied FPL API data, `/v1/*` for processed season blobs from KV.
 
@@ -79,7 +82,7 @@ ESLint-handled issues, Prettier formatting, naming bikeshedding (`foo` vs `fooDa
 
 ### Heuristics, not laws
 
-- `PulsePage1`–`PulsePage10` deliberately mirror each other — duplication aids the story-flow read; don't push abstraction here.
+- `PulsePage1`–`PulsePage10` deliberately mirror each other — duplication aids the story-flow read; don't push abstraction here. The career-rating chapter (`CareerRatingPage`, page 11) follows the same per-page convention. Pages are array-driven: `PulseContainer` builds the `pulseData` array and injects page 11 before the page-10 share finale; `PulsePageRenderer` switches on each entry's `.page`.
 - One-off award calculators in `features/league/awards/` are config-as-code by design; don't demand a base class.
 - Container/presentational split is a strong default, not a rule — a 30-line page with no fetching can stay one file.
 - Don't flag React `key` collisions unless the underlying data has realistic ambiguity — FPL manager names are not.

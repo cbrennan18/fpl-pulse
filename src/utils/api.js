@@ -32,6 +32,18 @@ export async function fetchEntrySummary(id, { signal } = {}) {
   }
 }
 
+// --- Fetch a manager's full history (past seasons + current) ---
+// Worker proxies FPL's entry/{id}/history/ at /fpl/entry/:id.
+export async function fetchEntryHistory(id, { signal } = {}) {
+  try {
+    return await fetchJson(`${BASE}/fpl/entry/${id}`, { signal });
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    console.warn(`Failed to fetch entry history for ${id}:`, err);
+    return null;
+  }
+}
+
 // --- Fetch bootstrap static data: players, teams, events, etc ---
 export async function fetchBootstrap({ signal } = {}) {
   try {

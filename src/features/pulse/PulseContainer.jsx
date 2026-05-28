@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { generatePulse } from './utils/pulseCalculations';
+import { getCareerRating } from './utils/careerRating';
 import {
   fetchEntrySeasonBlob,
   fetchBootstrap,
@@ -147,6 +148,19 @@ export default function PulseContainer() {
           playerPriceHistory: playerPriceHistory,
           finishedGwIds,
         });
+
+        // 13. Career-rating closing chapter (page 11), injected before the share finale.
+        // Soft-fail: on a history fetch error, omit the chapter and keep the rest of the recap.
+        try {
+          const careerRating = await getCareerRating(teamId, { signal });
+          const chapter = { page: 11, careerRating };
+          const finaleIdx = pulse.findIndex(p => p.page === 10);
+          if (finaleIdx === -1) pulse.push(chapter);
+          else pulse.splice(finaleIdx, 0, chapter);
+        } catch (err) {
+          if (err.name === 'AbortError') throw err;
+          console.warn('Career-rating chapter omitted:', err);
+        }
 
         setPulseData(pulse);
       } catch (err) {

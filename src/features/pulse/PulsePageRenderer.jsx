@@ -12,6 +12,7 @@ import PulsePage7 from './PulsePage7';
 import PulsePage8 from './PulsePage8';
 import PulsePage9 from './PulsePage9';
 import PulsePage10 from './PulsePage10';
+import CareerRatingPage from './CareerRatingPage';
 import PulseTopBar from './PulseTopBar';
 
 export default function PulsePageRenderer({
@@ -82,6 +83,7 @@ export default function PulsePageRenderer({
         {page === 7 && <PulsePage7 pageData={pageData} />}
         {page === 8 && <PulsePage8 pageData={pageData} />}
         {page === 9 && <PulsePage9 pageData={pageData} />}
+        {page === 11 && <CareerRatingPage pageData={pageData} />}
         {page === 10 && (
           <PulsePage10
             pageData={pageData}
