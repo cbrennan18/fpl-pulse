@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Pulse/Wrapped redesign specs (kept local)
+src/features/pulse/specs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

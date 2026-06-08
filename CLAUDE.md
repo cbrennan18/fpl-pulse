@@ -35,12 +35,13 @@ src/
     ├── home/            # Team summary dashboard
     ├── league/          # Mini-league browser + standings + awards
     │   └── awards/      # Award calculation modules (scoring, chip, transfer)
-    └── pulse/           # Story-style season recap (self-contained)
+    └── pulse/           # Story-style season recap (self-contained) — IN REDESIGN
+        ├── specs/       # story-arc.md, design-spec.md, art-direction.md (SOURCE OF TRUTH)
         └── utils/       # pulseCalculations.js, pulseTextTemplates.js, careerRating.js,
                          #   career-rating-v1.js + rating-to-rank-v1.json (frozen artifacts)
 ```
 
-**Career-rating artifacts:** `features/pulse/utils/career-rating-v1.js` and `rating-to-rank-v1.json` are **frozen, versioned** copies lifted from the sibling `fpl-career-rating/` repo (do not hand-edit — changes go upstream, then re-copy; the `-v1` suffix lets a future fpl-elo model swap in via a one-line import change). `careerRating.js` is the in-app wrapper around them.
+**Career-rating artifacts:** `features/pulse/utils/career-rating-v1.js` and `rating-to-rank-v1.json` are **frozen, versioned** copies lifted from the sibling `fpl-career-rating/` repo (do not hand-edit — changes go upstream, then re-copy; the `-v1` suffix lets a future fpl-elo model swap in via a one-line import change). `careerRating.js` is the in-app wrapper around them. The forthcoming **beat-9 xP model** (see Pulse/Wrapped below) will follow the same frozen-artifact pattern from its own pipeline repo.
 
 **Pattern:** Container/Presentational — `*Container.jsx` files handle data fetching, sibling page components handle layout and rendering.
 
@@ -49,11 +50,39 @@ src/
 - `/home` → Homepage (team summary, rank chart)
 - `/mini-leagues` → League list
 - `/mini-league` → League detail (standings + awards)
-- `/pulse` → Pulse (swipeable story-style GW recap, PulsePage1–10 + a career-rating chapter as page 11)
+- `/pulse` → Pulse Wrapped (season recap). **In active redesign** per `features/pulse/specs/`. Target: a mini-league-relative, story-style recap — Cloudflare-gated league-select → cover → 11 tap/swipe beats (2 screens each, 3 for multi-part) → share/recap carousel, plus a shared-link roster landing. `PulsePage1–10` + the career-rating chapter (page 11) are the **legacy** recap being replaced.
 
 **Data fetching:** All FPL API calls go through `src/utils/api.js`, which wraps the worker's endpoints (configurable via `VITE_API_BASE` env var, defaults to `fpl-pulse.ciaranbrennan18.workers.dev`). Two endpoint styles: `/fpl/*` for proxied FPL API data, `/v1/*` for processed season blobs from KV.
 
-**Styling:** Tailwind with custom theme colors (primary green `#28C76F`, accent purple `#8B5CF6` / class `accent-purple`, Manrope font). Custom safe-area utilities for mobile (`safe-p`, `pt-safe-bar`, etc) defined in `tailwind.config.js`.
+**Styling:** Tailwind with custom theme colors (primary green `#28C76F`, accent purple `#8B5CF6` / class `accent-purple`, Manrope font). Custom safe-area utilities for mobile (`safe-p`, `pt-safe-bar`, etc) defined in `tailwind.config.js`. **Note:** Wrapped is a visual **sub-brand** with its own warm-stock palette (see Pulse/Wrapped below) — it deliberately diverges from the app theme. Do not apply the app's green/purple/dark theme to Wrapped beats, and do not apply Wrapped's warm palette elsewhere in the app.
+
+## Pulse / Wrapped (active redesign)
+
+Pulse is being rebuilt from a generic 10-page stats recap into a mini-league-relative, story-style "Wrapped."
+
+**Source of truth — READ before touching Pulse:** `features/pulse/specs/story-arc.md` (narrative), `design-spec.md` (structure/flow/interaction), `art-direction.md` (visual language).
+
+### Build rules
+
+- Beat-by-beat. Reflect intent back against the specs before writing code (reflection gate).
+- Shared dependency: an **N-manager fetch** (every league member's picks × 38 GWs, via `api.js`) underpins almost every beat — **build it first**.
+- **Beat 9 (luck/skill) builds LAST.** Its xP model is a separate Python pipeline repo; the frontend consumes only its frozen output artifact (same pattern as the career-rating artifacts — `-v1` suffix, do not hand-edit, changes go upstream then re-copy).
+- The new recap uses a **reusable 2-screen beat template** (title/question → data), manual tap/swipe advance, progress per-beat. This **replaces** the deliberately-duplicated `PulsePage1–10`. Refactor toward the template; do not invest in the legacy pages.
+- Two pre-build verifications: per-league historical standings API (beat 11 depends on it); N-manager fetch holds at volume.
+
+### Wrapped visual language (scoped to `features/pulse/` ONLY — not the app theme)
+
+Warm-stock editorial — "programme paper."
+
+- **Surface:** cream `#ECE3CF` · ink `#1E1B16` · muted ink `#6B6354`.
+- **Accent is SEMANTIC:** green `#1C5237` = you / gain; gold `#B08518` = peak / highlight (fills & marks, **not** body text — fails contrast on cream); red `#B23A2E` = regret / stamp only. Everything else is ink/muted. (Marking *you* in green while rivals stay quiet is a consistent, ownable behaviour.)
+- **Type:** Bebas (display + hero numerals), Manrope body, **tabular figures** in all stat tables.
+- **Layout:** rules & borders over shadows; **square / 2px corners**; one idea per screen; editorial grid with generous warm-paper margins; tracked masthead kickers + edition numbering.
+- **Share cards:** square 1080×1080, reuse the `awards-share/` rasteriser (its inline-literal constraint applies — the `<foreignObject>` doesn't run Tailwind).
+
+### DO NOT (anti-default guard — Wrapped)
+
+No **Inter**; no **purple/blue gradient**; no **bento grid**; no **rounded-everything** (square/2px here); no **single-side coloured borders**; no **emoji-as-icons**; no **soft drop shadows** (use rules/borders); no **dark-mode-neon** (Wrapped is warm stock); no **glossy photo collage**; no **whitespace-as-crutch**. Copy: avoid "delve into" / "transform your X"; limit em-dashes; verdicts stay dry and punch at the decision, not the person.
 
 ## Code Review Standards
 
@@ -73,7 +102,7 @@ src/
 - Containers rendering JSX beyond a thin wrapper — they should hand off to a sibling presentational component.
 - Duplicated scoring/aggregation logic — consolidate into `utils/scoringUtils.js` or `features/pulse/utils/pulseCalculations.js`.
 - Magic numbers/strings (medal thresholds, gradient stops, GW counts) — move to `utils/constants.js` or a feature-local `constants.js`. The season length (`38`) and the periodic-award prefixes (`biMonthly_`, `monthly_`) are recurring offenders; flag any inline duplication.
-- Styling that bypasses theme — raw `#28C76F` / `#8B5CF6`, inline `font-family: 'Manrope'`, hand-rolled safe-area padding instead of `safe-p`/`pt-safe-bar`. Exception: components inside `features/league/awards-share/` that get rasterised by `html-to-image` must use inline literals (the rasteriser's `<foreignObject>` doesn't run Tailwind); the source of truth there is `awards-share/constants.js`.
+- Styling that bypasses theme — raw `#28C76F` / `#8B5CF6`, inline `font-family: 'Manrope'`, hand-rolled safe-area padding instead of `safe-p`/`pt-safe-bar`. Exception: components inside `features/league/awards-share/` (and Wrapped share cards) that get rasterised by `html-to-image` must use inline literals (the rasteriser's `<foreignObject>` doesn't run Tailwind); the source of truth there is `awards-share/constants.js`. Wrapped beats use the warm-stock palette above, not the app theme.
 - Functions that return JSX must be mounted as components (`<Foo />`), not called as helpers (`Foo({...})`) — calling them loses keys, hooks, and React's dev warnings.
 
 ### Skip
@@ -82,7 +111,7 @@ ESLint-handled issues, Prettier formatting, naming bikeshedding (`foo` vs `fooDa
 
 ### Heuristics, not laws
 
-- `PulsePage1`–`PulsePage10` deliberately mirror each other — duplication aids the story-flow read; don't push abstraction here. The career-rating chapter (`CareerRatingPage`, page 11) follows the same per-page convention. Pages are array-driven: `PulseContainer` builds the `pulseData` array and injects page 11 before the page-10 share finale; `PulsePageRenderer` switches on each entry's `.page`.
+- **Legacy Pulse:** `PulsePage1`–`PulsePage10` + the career-rating chapter (`CareerRatingPage`, page 11) deliberately mirror each other — duplication aids the legacy story-flow read; don't push abstraction on them. They are array-driven: `PulseContainer` builds the `pulseData` array and injects page 11 before the page-10 share finale; `PulsePageRenderer` switches on each entry's `.page`. **These are being replaced** by the reusable 2-screen beat template (see Pulse/Wrapped) — refactor toward the template rather than abstracting the old pages.
 - One-off award calculators in `features/league/awards/` are config-as-code by design; don't demand a base class.
 - Container/presentational split is a strong default, not a rule — a 30-line page with no fetching can stay one file.
 - Don't flag React `key` collisions unless the underlying data has realistic ambiguity — FPL manager names are not.
