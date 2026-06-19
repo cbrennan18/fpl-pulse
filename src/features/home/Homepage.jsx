@@ -158,18 +158,19 @@ export default function Homepage({ manager, summary, history, nextDeadline, load
 
       {/* ── DESTINATION BANNERS ── */}
       <div className="px-4 mt-2.5 space-y-2">
-        <motion.div
+        <motion.button
           {...fadeUp(4)}
-          className="w-full text-left rounded-xl h-[130px] flex items-center justify-between pointer-events-none"
-          style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', padding: '18px 20px', opacity: 0.45 }}
+          onClick={() => { track('wrapped_banner_clicked'); navigate(`/wrapped?id=${teamId}`); }}
+          className="w-full text-left rounded-xl border-l-2 border-[#00e87a] h-[130px] flex items-center justify-between"
+          style={{ backgroundColor: 'rgba(0,232,122,0.04)', padding: '18px 20px' }}
         >
           <div>
-            <p className="font-display text-[56px] leading-[0.9] text-[#00e87a]/20">FPL</p>
-            <p className="font-display text-[56px] leading-[0.9] text-white/20 -mt-0.5">WRAPPED</p>
-            <p className="font-mono text-[9px] uppercase text-[#525252] mt-1.5" style={{ letterSpacing: '0.1em' }}>COMING AT SEASON END</p>
+            <p className="font-display text-[56px] leading-[0.9] text-[#00e87a]">FPL</p>
+            <p className="font-display text-[56px] leading-[0.9] text-white -mt-0.5">WRAPPED</p>
+            <p className="font-mono text-[9px] uppercase text-[#525252] mt-1.5" style={{ letterSpacing: '0.1em' }}>YOUR SEASON, UNWRAPPED.</p>
           </div>
-          <LockIcon />
-        </motion.div>
+          <CaretRightIcon size={28} weight="bold" className="text-[#00e87a] shrink-0 ml-4" />
+        </motion.button>
 
         <motion.button
           {...fadeUp(5)}
@@ -213,13 +214,4 @@ function GwStat({ label, value, accent }) {
 
 function GwDivider() {
   return <div className="w-px self-stretch my-3 bg-white/[0.07]" />;
-}
-
-function LockIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 ml-4">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
 }

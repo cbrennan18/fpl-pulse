@@ -9,6 +9,8 @@
     "build": "vite build",
     "postbuild": "echo cbrennan.ie > dist/CNAME && touch dist/.nojekyll",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "predeploy": "npm run build && npm run postbuild",
     "deploy": "gh-pages -d dist"
   },
@@ -35,6 +37,7 @@
     "globals": "^16.0.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^4.1.9"
   }
 }
