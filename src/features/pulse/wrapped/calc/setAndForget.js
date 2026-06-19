@@ -109,7 +109,8 @@ export function scoreFrozenSquad(blob, gwIndex, finishedGwIds, positionOf) {
   return total;
 }
 
-function memberName(blob, id) {
+// Exported so sibling beat calcs (e.g. captain.js) name managers the same way.
+export function memberName(blob, id) {
   const s = blob?.summary;
   const name = `${s?.player_first_name ?? ''} ${s?.player_last_name ?? ''}`.trim();
   return name || `#${id}`;

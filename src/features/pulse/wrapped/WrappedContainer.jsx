@@ -26,12 +26,14 @@ import BuildingSeason from './loading/BuildingSeason';
 import NotAvailable from './loading/NotAvailable';
 import PlaceholderBeat from './beat/PlaceholderBeat';
 import SetAndForgetBeat from './beat/SetAndForgetBeat';
+import CaptainBeat from './beat/CaptainBeat';
 import RecapCarousel from './recap/RecapCarousel';
 
 // Real beats land here as they're built; every other slot falls back to the
 // placeholder so the chrome stays exercised for the whole arc.
 const BEAT_COMPONENTS = {
   'set-and-forget': SetAndForgetBeat,
+  'captain': CaptainBeat,
 };
 
 export default function WrappedContainer() {

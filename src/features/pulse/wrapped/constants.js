@@ -16,7 +16,7 @@ export const SEASON_LABEL = '2025/26';
 // session. This list exists so the chrome (progress, jump menu) is real now.
 export const BEATS = [
   { id: 'set-and-forget', theme: 'SET & FORGET', edition: 'No. 01', screenCount: 2 },
-  { id: 'captain',        theme: 'CAPTAIN',       edition: 'No. 02', screenCount: 2 },
+  { id: 'captain',        theme: 'CAPTAIN',       edition: 'No. 02', screenCount: 3 },
   { id: 'transfer-timing',theme: 'TRANSFER TIMING',edition: 'No. 03', screenCount: 2 },
   { id: 'maverick',       theme: 'MAVERICK',      edition: 'No. 04', screenCount: 3 },
   { id: 'fingerprint',    theme: 'FINGERPRINT',   edition: 'No. 05', screenCount: 2 },
