@@ -24,6 +24,18 @@ module.exports = {
         accent: {
           purple: '#8B5CF6',
         },
+        // Wrapped sub-brand palette (warm-stock editorial). Scoped to features/pulse/wrapped/
+        // ONLY — do not use elsewhere, and do not bring the app's green/purple theme into Wrapped.
+        // Accent is semantic: green = you/gain, gold = peak/highlight (fills/marks, not body text),
+        // stamp = regret stamp only.
+        wrapped: {
+          paper: '#ECE3CF',
+          ink: '#1E1B16',
+          muted: '#6B6354',
+          green: '#1C5237',
+          gold: '#B08518',
+          stamp: '#B23A2E',
+        },
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],
