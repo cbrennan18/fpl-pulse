@@ -27,6 +27,7 @@ import NotAvailable from './loading/NotAvailable';
 import PlaceholderBeat from './beat/PlaceholderBeat';
 import SetAndForgetBeat from './beat/SetAndForgetBeat';
 import CaptainBeat from './beat/CaptainBeat';
+import TransferTimingBeat from './beat/TransferTimingBeat';
 import RecapCarousel from './recap/RecapCarousel';
 
 // Real beats land here as they're built; every other slot falls back to the
@@ -34,6 +35,7 @@ import RecapCarousel from './recap/RecapCarousel';
 const BEAT_COMPONENTS = {
   'set-and-forget': SetAndForgetBeat,
   'captain': CaptainBeat,
+  'transfer-timing': TransferTimingBeat,
 };
 
 export default function WrappedContainer() {
