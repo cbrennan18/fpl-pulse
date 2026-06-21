@@ -31,6 +31,7 @@ import TransferTimingBeat from './beat/TransferTimingBeat';
 import MaverickBeat from './beat/MaverickBeat';
 import FingerprintBeat from './beat/FingerprintBeat';
 import GameweekKingsBeat from './beat/GameweekKingsBeat';
+import ChipsBeat from './beat/ChipsBeat';
 import RecapCarousel from './recap/RecapCarousel';
 
 // Real beats land here as they're built; every other slot falls back to the
@@ -42,6 +43,7 @@ const BEAT_COMPONENTS = {
   'maverick': MaverickBeat,
   'fingerprint': FingerprintBeat,
   'gameweek-kings': GameweekKingsBeat,
+  'chips': ChipsBeat,
 };
 
 export default function WrappedContainer() {
