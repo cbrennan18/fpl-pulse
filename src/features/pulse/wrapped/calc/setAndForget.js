@@ -43,7 +43,8 @@ export function buildGwPointsIndex(seasonElements, finishedGwIds) {
 
 // First bench player (in saved order) who played this GW and matches the blanked
 // starter's type (GK only covers GK; outfield only covers outfield). null if none.
-function findBenchSub(starter, bench, used, statOf, positionOf) {
+// Exported so sibling beats (e.g. fingerprint.js) keep the autosub rule identical.
+export function findBenchSub(starter, bench, used, statOf, positionOf) {
   const starterIsGk = positionOf(starter.element) === 1;
   for (const b of bench) {
     if (used.has(b.element)) continue;

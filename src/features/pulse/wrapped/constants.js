@@ -19,7 +19,7 @@ export const BEATS = [
   { id: 'captain',        theme: 'CAPTAIN',       edition: 'No. 02', screenCount: 3 },
   { id: 'transfer-timing',theme: 'TRANSFER TIMING',edition: 'No. 03', screenCount: 2 },
   { id: 'maverick',       theme: 'MAVERICK',      edition: 'No. 04', screenCount: 4 },
-  { id: 'fingerprint',    theme: 'FINGERPRINT',   edition: 'No. 05', screenCount: 2 },
+  { id: 'fingerprint',    theme: 'FINGERPRINT',   edition: 'No. 05', screenCount: 3 },
   { id: 'gameweek-kings', theme: 'GAMEWEEK KINGS',edition: 'No. 06', screenCount: 2 },
   { id: 'chips',          theme: 'CHIPS',         edition: 'No. 07', screenCount: 2 },
   { id: 'the-bench',      theme: 'THE BENCH',     edition: 'No. 08', screenCount: 3 },
