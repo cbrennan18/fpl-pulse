@@ -34,6 +34,7 @@ import GameweekKingsBeat from './beat/GameweekKingsBeat';
 import ChipsBeat from './beat/ChipsBeat';
 import BenchBeat from './beat/BenchBeat';
 import RaceBeat from './beat/RaceBeat';
+import CodaBeat from './beat/CodaBeat';
 import RecapCarousel from './recap/RecapCarousel';
 
 // Real beats land here as they're built; every other slot falls back to the
@@ -48,6 +49,7 @@ const BEAT_COMPONENTS = {
   'chips': ChipsBeat,
   'the-bench': BenchBeat,
   'the-race': RaceBeat,
+  'coda': CodaBeat,
 };
 
 export default function WrappedContainer() {
