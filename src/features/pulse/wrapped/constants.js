@@ -25,7 +25,7 @@ export const BEATS = [
   { id: 'the-bench',      theme: 'THE BENCH',     edition: 'No. 08', screenCount: 3 },
   { id: 'luck-vs-skill',  theme: 'LUCK VS SKILL', edition: 'No. 09', screenCount: 2 },
   { id: 'the-race',       theme: 'THE RACE',      edition: 'No. 10', screenCount: 3 },
-  { id: 'coda',           theme: 'ALL-TIME',      edition: 'No. 11', screenCount: 4 },
+  { id: 'coda',           theme: 'ALL-TIME',      edition: 'No. 11', screenCount: 3 },
 ];
 
 // cover + 11 beats
