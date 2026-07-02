@@ -24,6 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BeatShell from './BeatShell';
 import DetailSheet from './DetailSheet';
+import RankTable from './RankTable';
 import { useWrapped } from '../PackContext';
 import { computeMaverick, buildVerdict, conformityPct } from '../calc/maverick';
 
@@ -345,37 +346,26 @@ function PuntsScreen({ result }) {
 
 // --- Screen 3 — where you sit (the close) -------------------------------------
 
-function RankRow({ rank, name, conformity, isYou, onTap }) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation(); // a row tap opens the sheet; never advance the beat
-        onTap();
-      }}
-      className="flex w-full items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15 text-left"
-    >
-      <span className="w-5 text-right tabular-nums font-mono text-sm text-wrapped-muted">{rank}</span>
-      <span className={`flex-1 truncate font-sans text-[15px] ${isYou ? 'text-wrapped-green font-semibold' : 'text-wrapped-ink'}`}>
-        {name}
-      </span>
-      {/* one decimal so equal-looking rows (32.4 vs 31.9) justify their order */}
-      <span className={`w-16 text-right tabular-nums font-sans text-[15px] ${isYou ? 'text-wrapped-green font-semibold' : 'text-wrapped-ink'}`}>
-        {(conformity * 100).toFixed(1)}%
-      </span>
-    </button>
-  );
-}
-
 function PlacementScreen({ result, onRowTap }) {
   const { you, ranking } = result;
   if (!you) return null;
 
   const verdict = buildVerdict(result);
 
+  // ASCENDING template % — rank 1 = most maverick at the top. You're typically high
+  // template, so you fall to the foot; RankTable's sticky YOU row keeps you pinned.
+  // One decimal so near-equal rows (32.4 vs 31.9) justify their order.
+  const rows = ranking.map((r) => ({
+    entryId: r.entryId,
+    rank: r.rank,
+    name: r.isYou ? 'You' : r.name,
+    isYou: r.isYou,
+    value: `${(r.conformity * 100).toFixed(1)}%`,
+  }));
+
   return (
     <div className="mt-3 flex flex-col h-full">
-      {/* hero conformity % */}
+      {/* hero conformity % — YOUR least-maverick figure */}
       <div className="flex items-baseline gap-2">
         <span className="font-display text-[6rem] leading-[0.8] tabular-nums text-wrapped-green">
           {conformityPct(you.conformity)}
@@ -384,21 +374,12 @@ function PlacementScreen({ result, onRowTap }) {
       </div>
       <p className="font-sans text-sm text-wrapped-muted -mt-1">
         Your <span className="text-wrapped-ink">template %</span> = how much of your season you
-        spent on the league&apos;s favourites.
+        spent on the league&apos;s favourites. The mavericks are up top.
       </p>
 
-      {/* named sheep → maverick ranking */}
-      <div className="mt-4 flex flex-col min-h-0 flex-1">
-        <div className="flex items-baseline gap-3 pb-1 border-b border-wrapped-ink font-mono text-[10px] uppercase tracking-[0.2em] text-wrapped-muted">
-          <span className="w-5 text-right">#</span>
-          <span className="flex-1">Sheep → maverick</span>
-          <span className="w-16 text-right">Template</span>
-        </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {ranking.map((r) => (
-            <RankRow key={r.entryId} rank={r.rank} name={r.isYou ? 'You' : r.name} conformity={r.conformity} isYou={r.isYou} onTap={() => onRowTap(r.entryId)} />
-          ))}
-        </div>
+      {/* named maverick → sheep ranking (most maverick first; you pin at the foot) */}
+      <div className="mt-4 flex flex-col min-h-0 flex-1 overflow-y-auto">
+        <RankTable rows={rows} valueHeader="Template" onRowTap={(r) => onRowTap(r.entryId)} />
       </div>
 
       {/* the close — character verdict */}

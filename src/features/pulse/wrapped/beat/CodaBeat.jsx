@@ -39,6 +39,7 @@ import DetailSheet from './DetailSheet';
 // CodaSparkline is UNWIRED for 2025/26 — it only rendered the dropped career half (a).
 // Left on disk (not imported) so next year's career-rating work can reinstate it.
 import LegacyPositionChart from './LegacyPositionChart';
+import RankTable from './RankTable';
 import { useWrapped } from '../PackContext';
 import { fetchEntryHistory } from '../../../../utils/api';
 import { computeLeagueLegacy } from '../calc/leagueLegacy';
@@ -113,12 +114,28 @@ export default function CodaBeat({ screenIndex, ...shell }) {
 
   // Tap→detail: the season track whose rank + points + what-if winner is open.
   const [detailSeason, setDetailSeason] = useState(null);
+  // Tap→detail: the full all-time standings table (a SEPARATE sheet from the
+  // per-season detail; only one is ever open at a time).
+  const [tableOpen, setTableOpen] = useState(false);
   useEffect(() => {
-    if (screenIndex !== LEGACY_SCREEN) setDetailSeason(null);
+    if (screenIndex !== LEGACY_SCREEN) {
+      setDetailSeason(null);
+      setTableOpen(false);
+    }
   }, [screenIndex]);
 
   const seasonRecord = detailSeason ? legacy?.series?.find((s) => s.season === detailSeason) : null;
   const seasonWinner = detailSeason ? legacy?.winnersBySeason?.[detailSeason] : null;
+
+  // The all-time table rows: the standing ranking (tenure-shrunk order) surfaced
+  // with seasons-played as the value ("Nth all-time · N seasons"). No percentile.
+  const allTimeRows = (legacy?.standing?.ranking || []).map((r, i) => ({
+    entryId: r.id,
+    rank: i + 1,
+    name: r.isYou ? 'You' : r.name,
+    isYou: r.isYou,
+    value: String(r.seasons),
+  }));
 
   return (
     <BeatShell {...shell}>
@@ -130,7 +147,7 @@ export default function CodaBeat({ screenIndex, ...shell }) {
       {screenIndex === 1 && (
         loading
           ? <LoadingScreen />
-          : <LegacyScreen legacy={legacy} onSeasonTap={setDetailSeason} />
+          : <LegacyScreen legacy={legacy} onSeasonTap={setDetailSeason} onStandingTap={() => setTableOpen(true)} />
       )}
       {screenIndex === 2 && <SignOffScreen yourName={yourName} />}
 
@@ -140,6 +157,14 @@ export default function CodaBeat({ screenIndex, ...shell }) {
         title={detailSeason || ''}
       >
         <SeasonDetail record={seasonRecord} winner={seasonWinner} />
+      </DetailSheet>
+
+      <DetailSheet
+        open={tableOpen}
+        onClose={() => setTableOpen(false)}
+        title="All-time · this league"
+      >
+        <RankTable rows={allTimeRows} valueHeader="Seasons" />
       </DetailSheet>
     </BeatShell>
   );
@@ -224,7 +249,7 @@ function LoadingScreen() {
 // average-percentile standing + best-ever year, captioned as a cross-years what-if.
 // Legacy-null (not enough shared history) is the lone soft-fail now → the light
 // "come back next year" comeback close (the re-engagement hook, not an error).
-function LegacyScreen({ legacy, onSeasonTap }) {
+function LegacyScreen({ legacy, onSeasonTap, onStandingTap }) {
   if (!legacy) {
     return (
       <ScreenFrame kicker="League legacy">
@@ -250,13 +275,23 @@ function LegacyScreen({ legacy, onSeasonTap }) {
         Tap a season for your finish + the what-if winner →
       </p>
 
-      <p className="font-sans text-lg leading-snug mt-3 [overflow-wrap:anywhere]">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation(); // open the all-time table; never advance the beat
+          onStandingTap();
+        }}
+        className="text-left font-sans text-lg leading-snug mt-3 [overflow-wrap:anywhere]"
+      >
         Across every season you&apos;ve played, you rank{' '}
         <span className="text-wrapped-green font-semibold">
           {standing.you.rank != null ? ordinal(standing.you.rank) : '—'}
         </span>
-        {' '}of {standing.you.of} all-time in this league.
-      </p>
+        {' '}of {standing.you.of} all-time in this league.{' '}
+        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-wrapped-muted underline underline-offset-4 decoration-wrapped-ink/30">
+          See the table →
+        </span>
+      </button>
 
       {bestEver && (
         <p className="font-sans text-[15px] leading-snug text-wrapped-ink mt-2 [overflow-wrap:anywhere]">

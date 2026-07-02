@@ -34,9 +34,9 @@ describe('computeLeagueLegacy — standing, series, anchor, best-ever (hand-reco
     // 2023/24 (field 4): You 2100, Amy 2050, Cat 2000, Bob 1500 → you 1st of 4
     // 2025/26 (field 4, real): you 2nd of 4
     expect(res.series).toEqual([
-      { season: '2022/23', position: 2, field: 3, real: false, best: false },
-      { season: '2023/24', position: 1, field: 4, real: false, best: true },
-      { season: '2025/26', position: 2, field: 4, real: true, best: false },
+      { season: '2022/23', position: 2, field: 3, points: 1800, real: false, best: false },
+      { season: '2023/24', position: 1, field: 4, points: 2100, real: false, best: true },
+      { season: '2025/26', position: 2, field: 4, points: 2200, real: true, best: false },
     ]);
     // SEASON_LABEL sorts strictly rightmost against YYYY/YY past labels (fold 2).
     const last = res.series[res.series.length - 1];

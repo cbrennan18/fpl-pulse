@@ -278,6 +278,17 @@ export function computeBench({
     ? youRow.cells.reduce((m, c) => Math.max(m, c.recoverable), 0)
     : 0;
 
+  // The full bench-corrected league table (the expandable view behind the
+  // 3rd→2nd headline): the SAME `byCorrected` ordering, surfaced as RankTable rows
+  // with each member's recoverable GAIN as the value. No recompute.
+  const correctedTable = byCorrected.map((r, i) => ({
+    entryId: r.entryId,
+    rank: i + 1,
+    name: r.isYou ? 'You' : r.name,
+    isYou: r.isYou,
+    value: `+${r.recoverableTotal}`,
+  }));
+
   return {
     you: youRow
       ? { name: youRow.name, cells: youRow.cells, recoverableTotal: youRow.recoverableTotal, maxCell }
@@ -285,6 +296,7 @@ export function computeBench({
     actualFinish,
     correctedFinish,
     count: rows.length,
+    correctedTable,
   };
 }
 

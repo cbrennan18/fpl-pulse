@@ -172,8 +172,11 @@ export function computeMaverick({ entries, members, you, seasonElements, finishe
     r.offTemplatePlayers = offTemplatePlayers.sort((a, b) => b.weeks - a.weeks || a.element - b.element);
   }
 
+  // ASCENDING template %: rank 1 = lowest template = MOST maverick (at the top).
+  // You're typically high template, so you fall to/near the foot of the list — the
+  // RankTable's sticky YOU row keeps you pinned/visible there.
   const ranking = [...rows]
-    .sort((a, b) => b.conformity - a.conformity || a.entryId - b.entryId)
+    .sort((a, b) => a.conformity - b.conformity || a.entryId - b.entryId)
     .map((r, i) => ({
       entryId: r.entryId,
       name: r.name,
@@ -196,9 +199,10 @@ export function computeMaverick({ entries, members, you, seasonElements, finishe
     };
   }
 
-  // The named "resident contrarian" = the least-conformist OTHER manager.
+  // The named "resident contrarian" = the least-conformist OTHER manager. With the
+  // ascending sort that's now the FIRST other in the ranking (rank 1 = most maverick).
   const others = ranking.filter((r) => !r.isYou);
-  const maverickNamed = others.length ? others[others.length - 1] : null;
+  const maverickNamed = others.length ? others[0] : null;
 
   // Your differentials.
   const maxOwners = diffMaxOwners(N);
@@ -299,11 +303,13 @@ export function buildVerdict({ you, best, worst, count }) {
   if (!you) return { label: '', line: '' };
   const p = conformityPct(you.conformity);
 
+  // Rank is now ASCENDING by template % — rank 1 = MOST maverick (lowest template),
+  // rank `count` = MOST template / least maverick. You typically sit near the foot.
   let label;
   if (you.rank <= Math.ceil(count * 0.34)) {
-    label = `You were ${p}% template — ${ordinal(you.rank)} most conformist in your league.`;
-  } else if (you.rank >= Math.ceil(count * 0.67)) {
     label = `You were ${p}% template — one of the league's mavericks, ${ordinal(you.rank)} of ${count}.`;
+  } else if (you.rank >= Math.ceil(count * 0.67)) {
+    label = `You were ${p}% template — most template, least maverick, ${ordinal(you.rank)} of ${count}.`;
   } else {
     label = `You were ${p}% template — middle of the pack, ${ordinal(you.rank)} of ${count}.`;
   }

@@ -109,12 +109,15 @@ describe('template detection (EO) + conformity', () => {
     expect(names).toContain('P101');
     expect(r.templateCount).toBeGreaterThanOrEqual(2);
   });
-  it('computes weeks-held-weighted conformity and ranks sheep above mavericks', () => {
-    // Pure-sheep members (Bo/Cy/Di) own only templates → conformity 1.0, top ranks.
+  it('computes weeks-held-weighted conformity and ranks mavericks above sheep (ascending)', () => {
+    // ASCENDING template %: rank 1 = most maverick = lowest conformity = you (you
+    // hold the most non-template diffs).
     const top = r.ranking[0];
-    expect(top.conformity).toBeCloseTo(1, 5);
-    // You hold many non-template diffs → lower conformity than the sheep.
-    expect(r.you.conformity).toBeLessThan(1);
+    expect(top.isYou).toBe(true);
+    expect(top.conformity).toBeLessThan(1);
+    // Pure-sheep members (Bo/Cy/Di) own only templates → conformity 1.0, at the foot.
+    const last = r.ranking[r.ranking.length - 1];
+    expect(last.conformity).toBeCloseTo(1, 5);
     expect(conformityPct(r.you.conformity)).toBeGreaterThan(0);
   });
   it('names the least-conformist OTHER manager as the resident contrarian', () => {
@@ -194,8 +197,9 @@ describe('quiz selection + fallback', () => {
 
 describe('buildVerdict — both directions, punches at the decision', () => {
   it('vindication when the boldest call paid off', () => {
+    // ascending rank: 2 of 6 = near the top = a maverick.
     const v = buildVerdict({
-      you: { conformity: 0.4, rank: 5, templateOwned: 2 },
+      you: { conformity: 0.4, rank: 2, templateOwned: 2 },
       best: { name: 'Mateta', pts: 71, onlyYou: true },
       worst: { name: 'Awoniyi', pts: 9, onlyYou: true, weeksInSquad: 6 },
       count: 6,
@@ -206,7 +210,7 @@ describe('buildVerdict — both directions, punches at the decision', () => {
   });
   it('comeuppance reads as cost of the streak, never a person', () => {
     const v = buildVerdict({
-      you: { conformity: 0.3, rank: 6, templateOwned: 1 },
+      you: { conformity: 0.3, rank: 2, templateOwned: 1 },
       best: { name: 'Wood', pts: 18, onlyYou: true },
       worst: { name: 'Awoniyi', pts: 9, onlyYou: true, weeksInSquad: 8 },
       count: 6,
@@ -215,8 +219,9 @@ describe('buildVerdict — both directions, punches at the decision', () => {
     expect(v.line).not.toMatch(/worse than|than Dave|than your/i);
   });
   it('handles the pure-sheep case (no differentials)', () => {
-    const v = buildVerdict({ you: { conformity: 0.95, rank: 1 }, best: null, worst: null, count: 6 });
-    expect(v.label).toContain('most conformist');
+    // high conformity → foot of the ascending order → "most template, least maverick".
+    const v = buildVerdict({ you: { conformity: 0.95, rank: 6 }, best: null, worst: null, count: 6 });
+    expect(v.label).toContain('most template');
     expect(v.line).toContain("league's favourites");
   });
 });

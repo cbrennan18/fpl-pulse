@@ -168,7 +168,10 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
     r.shrunk = (r.rawAvg * r.count + prior * SHRINK_PSEUDO_COUNT) / (r.count + SHRINK_PSEUDO_COUNT);
   }
   rows.sort((a, b) => a.shrunk - b.shrunk || a.id - b.id);
-  const ranking = rows.map((r) => ({ id: r.id, name: memberName(entries?.[r.id], r.id), isYou: r.id === you }));
+  // `seasons` = counted seasons this member appears in (already computed as r.count);
+  // surfaced for the all-time table row content ("Nth all-time · N seasons"). The
+  // percentile stays the sort key only — never surfaced.
+  const ranking = rows.map((r) => ({ id: r.id, name: memberName(entries?.[r.id], r.id), isYou: r.id === you, seasons: r.count }));
   const youIdx = ranking.findIndex((r) => r.isYou);
   const standing = { ranking, you: { rank: youIdx >= 0 ? youIdx + 1 : null, of: ranking.length } };
 

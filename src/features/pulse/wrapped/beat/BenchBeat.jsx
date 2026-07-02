@@ -21,10 +21,13 @@
 import { useEffect, useState } from 'react';
 import BeatShell from './BeatShell';
 import BenchHeatmap from './BenchHeatmap';
+import DetailSheet from './DetailSheet';
+import RankTable from './RankTable';
 import { useWrapped } from '../PackContext';
 import { computeBench, buildVerdict, ordinal } from '../calc/bench';
 
 const HEATMAP_SCREEN = 1;
+const VERDICT_SCREEN = 2;
 
 export default function BenchBeat({ screenIndex, ...shell }) {
   const { entries, members, you, seasonElements, finishedGwIds, playerPosition, playerName } = useWrapped();
@@ -41,9 +44,18 @@ export default function BenchBeat({ screenIndex, ...shell }) {
 
   const [selectedGw, setSelectedGw] = useState(null);
 
+  // Tap→detail: the full bench-corrected league table (the expandable view behind
+  // the 3rd→2nd headline).
+  const [tableOpen, setTableOpen] = useState(false);
+
   // Leaving the heatmap (forward or swipe-back) resets the selection.
   useEffect(() => {
     if (screenIndex !== HEATMAP_SCREEN) setSelectedGw(null);
+  }, [screenIndex]);
+
+  // Leaving the verdict screen closes the full-league table.
+  useEffect(() => {
+    if (screenIndex !== VERDICT_SCREEN) setTableOpen(false);
   }, [screenIndex]);
 
   return (
@@ -56,7 +68,15 @@ export default function BenchBeat({ screenIndex, ...shell }) {
       {screenIndex === 1 && (
         <HeatmapScreen result={result} selectedGw={selectedGw} onSelect={setSelectedGw} />
       )}
-      {screenIndex === 2 && <VerdictScreen result={result} />}
+      {screenIndex === 2 && <VerdictScreen result={result} onExpand={() => setTableOpen(true)} />}
+
+      <DetailSheet
+        open={tableOpen}
+        onClose={() => setTableOpen(false)}
+        title="Bench corrected · full league"
+      >
+        <RankTable rows={result.correctedTable} valueHeader="Recovered" />
+      </DetailSheet>
     </BeatShell>
   );
 }
@@ -103,7 +123,7 @@ function HeatmapScreen({ result, selectedGw, onSelect }) {
   );
 }
 
-function VerdictScreen({ result }) {
+function VerdictScreen({ result, onExpand }) {
   if (!result.you) return null;
   const { actualFinish, correctedFinish, count } = result;
   return (
@@ -117,6 +137,17 @@ function VerdictScreen({ result }) {
         <span className="font-display text-4xl text-wrapped-muted pb-2">→</span>
         <FinishStat label="Bench corrected" value={correctedFinish} count={count} you />
       </div>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation(); // open the full-league table; never advance the beat
+          onExpand();
+        }}
+        className="mt-5 self-start font-mono text-[11px] uppercase tracking-[0.2em] text-wrapped-muted underline underline-offset-4 decoration-wrapped-ink/30"
+      >
+        See the whole league →
+      </button>
 
       <p className="font-sans text-lg leading-snug mt-auto pt-4 border-t border-wrapped-ink/30 [overflow-wrap:anywhere]">
         {buildVerdict(result)}
