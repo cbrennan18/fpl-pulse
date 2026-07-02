@@ -192,9 +192,11 @@ describe('buildVerdict — both directions, dry, descriptive', () => {
       balanceRank: 4,
     };
     const v = buildVerdict(diagnosis, 15);
-    expect(v).toContain('7th of 15');
-    expect(v).toContain('12th of 15');
+    expect(v).toContain('5th of 15'); // strongest position rank
+    expect(v).toContain('12th of 15'); // weakest position rank
     expect(v).toContain('produced the fewest'); // descriptive, not "your defenders are bad"
+    // overall rank is the hero numeral on-screen — not echoed in the verdict
+    expect(v).not.toContain('7th of 15');
   });
 });
 

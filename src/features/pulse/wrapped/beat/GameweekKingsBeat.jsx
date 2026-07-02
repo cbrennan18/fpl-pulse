@@ -86,7 +86,7 @@ function WinRow({ row }) {
 }
 
 function PayoffScreen({ result }) {
-  const { you, leagueRecord, youBest, youHoldRecord } = result;
+  const { you, youBest, youHoldRecord } = result;
   if (!you) return null;
   const rows = leaderboardRows(result);
   const heroTone = youHoldRecord ? 'text-wrapped-gold' : 'text-wrapped-green';
@@ -130,11 +130,6 @@ function PayoffScreen({ result }) {
               </span>
             </div>
           </div>
-          {!youHoldRecord && leagueRecord && (
-            <p className="font-sans text-[13px] text-wrapped-muted mt-1">
-              League record: {leagueRecord.value} — {leagueRecord.name}, GW{leagueRecord.gw}.
-            </p>
-          )}
         </div>
       )}
 

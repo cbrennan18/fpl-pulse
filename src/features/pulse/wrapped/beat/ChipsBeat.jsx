@@ -141,8 +141,11 @@ function ChipCard({ chipKey, played, leagueBest, extras, revealed, onReveal }) {
   // (back-to-back chip), or nothing for a chip you didn't play this half.
   let figure = null;
   if (played && played.gain != null) {
+    // Colour lock: green/gold marks a gain (or a league-best peak). A negative
+    // delta is not a gain — it stays ink, never green.
+    const figureTone = played.gain < 0 ? 'text-wrapped-ink' : gainTone;
     figure = (
-      <span className={`tabular-nums font-display text-4xl shrink-0 ${gainTone}`}>
+      <span className={`tabular-nums font-display text-4xl shrink-0 ${figureTone}`}>
         {played.gain >= 0 ? '+' : ''}{played.gain}
       </span>
     );

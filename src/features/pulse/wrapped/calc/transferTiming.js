@@ -248,7 +248,7 @@ export function buildVerdict(you) {
     if (earlyAvg > lateAvg) {
       return `Your early moves swing ${fmtSwing(earlyAvg)} a transfer; your deadline-day buys, ${fmtSwing(lateAvg)}. The planning pays.`;
     }
-    return `You buy best on the buzzer — Day-0 swings ${fmtSwing(lateAvg)} a transfer, your early moves only ${fmtSwing(earlyAvg)}.`;
+    return `You buy best on the buzzer — deadline day swings ${fmtSwing(lateAvg)} a transfer, your early moves only ${fmtSwing(earlyAvg)}.`;
   }
 
   const avg = you.avgSwingPerTransfer;

@@ -239,11 +239,11 @@ export function computeFingerprint({
 // 9's job). Punch at the decision, never the person.
 export function buildVerdict(diagnosis, count) {
   if (!diagnosis) return '';
-  const { overallRank, weakest, strongest, isBalanced, balanceRank } = diagnosis;
+  const { weakest, strongest, isBalanced, balanceRank } = diagnosis;
 
   if (isBalanced) {
     return `No area carried you and none let you down — the ${ordinal(balanceRank)}-most balanced squad of ${count} in your league.`;
   }
 
-  return `${ordinal(overallRank)} of ${count} overall, ${ordinal(strongest.rank)} for ${strongest.label} — but your ${weakest.label} produced the fewest, ${ordinal(weakest.rank)} of ${count}. Sort it and you're climbing.`;
+  return `Strongest at ${strongest.label} (${ordinal(strongest.rank)} of ${count}), but your ${weakest.label} produced the fewest, ${ordinal(weakest.rank)} of ${count}. Sort it and you're climbing.`;
 }

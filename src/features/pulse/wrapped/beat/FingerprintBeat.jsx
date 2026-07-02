@@ -152,7 +152,7 @@ function DiagnosisScreen({ result, onPositionTap }) {
         <span className="font-display text-[7rem] leading-[0.8] tabular-nums text-wrapped-ink">
           {ordinal(overallRank)}
         </span>
-        <span className="font-sans text-sm text-wrapped-muted">of {count} overall</span>
+        <span className="font-sans text-sm text-wrapped-muted">of {count} on total points</span>
       </div>
 
       {/* programme table — RAW points per position, each rank shown "of N" */}

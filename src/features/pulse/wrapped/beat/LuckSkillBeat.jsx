@@ -149,7 +149,7 @@ function LeaguePanel({ result }) {
 // quality line when the artefact missed any fielded players.
 function Credit({ misses, attribution }) {
   return (
-    <p className="font-mono text-[9px] leading-relaxed uppercase tracking-[0.12em] text-wrapped-muted mt-1.5">
+    <p className="font-sans text-[10px] leading-relaxed text-wrapped-muted mt-1.5">
       Expected points: retrospective model · {attribution}
       {misses?.total > 0 && ` · ${misses.total} unmodelled player-week${misses.total === 1 ? '' : 's'} filled at par`}
     </p>

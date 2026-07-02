@@ -332,7 +332,7 @@ export function buildVerdict(result) {
   const { processRank, resultsRank, count, verdictTone, you } = result;
   const proc = `${ordinal(processRank)} of ${count}`;
   const res = `${ordinal(resultsRank)} of ${count}`;
-  const swing = Math.abs(you.luck);
+  const swing = Math.round(Math.abs(you.luck));
 
   if (verdictTone === 'lucky') {
     return `Your process ranked ${proc}; your results came in ${res}. The finish ran ${swing} points ahead of what the underlying numbers expected — variance broke your way.`;
@@ -399,7 +399,7 @@ export function buildAe64Verdict(result) {
   const { processBeat, resultsBeat, n, verdictTone, you } = result;
   const proc = `${processBeat} of ${n}`;
   const res = `${resultsBeat} of ${n}`;
-  const swing = Math.abs(you.luck);
+  const swing = Math.round(Math.abs(you.luck));
 
   if (verdictTone === 'lucky') {
     return `Dropped into Analytics Elite 64, your process would have outscored ${proc}; your results, ${res}. The finish ran ${swing} points ahead of what the underlying numbers expected — variance broke your way.`;

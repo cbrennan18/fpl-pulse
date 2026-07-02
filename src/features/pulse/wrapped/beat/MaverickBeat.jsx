@@ -302,7 +302,7 @@ function PuntBlock({ label, diff, tone, leagueSize }) {
         <span className={`tabular-nums font-display text-5xl shrink-0 ${ptsClass}`}>{diff.pts}</span>
       </div>
       <div className="flex items-baseline justify-between gap-3 mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-wrapped-muted">
-        <span className="truncate">{ownLabel(diff, leagueSize)} · {diff.weeksInSquad} wks held</span>
+        <span className="truncate">{ownLabel(diff, leagueSize)} · {diff.weeksInSquad} wks</span>
         <span className="tabular-nums shrink-0">{diff.ppg.toFixed(1)} pts/gw</span>
       </div>
     </div>
