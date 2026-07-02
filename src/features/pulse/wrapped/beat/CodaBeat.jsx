@@ -35,6 +35,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import BeatShell from './BeatShell';
+import DetailSheet from './DetailSheet';
 // CodaSparkline is UNWIRED for 2025/26 — it only rendered the dropped career half (a).
 // Left on disk (not imported) so next year's career-rating work can reinstate it.
 import LegacyPositionChart from './LegacyPositionChart';
@@ -45,6 +46,7 @@ import { memberName, ordinal } from '../calc/setAndForget';
 import { SEASON_LABEL } from '../constants';
 
 const FETCH_CONCURRENCY = 8;
+const LEGACY_SCREEN = 1;
 
 // Fetch every member's past[] in polite 8-wide waves. fetchEntryHistory already
 // returns null on a non-abort failure (it never throws except AbortError), so one
@@ -109,6 +111,15 @@ export default function CodaBeat({ screenIndex, ...shell }) {
 
   const loading = data.status === 'loading';
 
+  // Tap→detail: the season track whose rank + points + what-if winner is open.
+  const [detailSeason, setDetailSeason] = useState(null);
+  useEffect(() => {
+    if (screenIndex !== LEGACY_SCREEN) setDetailSeason(null);
+  }, [screenIndex]);
+
+  const seasonRecord = detailSeason ? legacy?.series?.find((s) => s.season === detailSeason) : null;
+  const seasonWinner = detailSeason ? legacy?.winnersBySeason?.[detailSeason] : null;
+
   return (
     <BeatShell {...shell}>
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-wrapped-muted">
@@ -119,10 +130,57 @@ export default function CodaBeat({ screenIndex, ...shell }) {
       {screenIndex === 1 && (
         loading
           ? <LoadingScreen />
-          : <LegacyScreen legacy={legacy} />
+          : <LegacyScreen legacy={legacy} onSeasonTap={setDetailSeason} />
       )}
       {screenIndex === 2 && <SignOffScreen yourName={yourName} />}
+
+      <DetailSheet
+        open={detailSeason != null}
+        onClose={() => setDetailSeason(null)}
+        title={detailSeason || ''}
+      >
+        <SeasonDetail record={seasonRecord} winner={seasonWinner} />
+      </DetailSheet>
     </BeatShell>
+  );
+}
+
+// Your finish that season + the what-if winner. LOCKED FRAMING: for PAST seasons the
+// winner is the SYNTHETIC re-run leader (never the real historical winner) — copy stays
+// what-if. 2025/26 is the one REAL anchor, so its line states the real current leader.
+function SeasonDetail({ record, winner }) {
+  if (!record) return null;
+  return (
+    <div className="space-y-3">
+      <p className="font-sans text-lg leading-snug [overflow-wrap:anywhere]">
+        You finished{' '}
+        <span className="text-wrapped-green font-semibold">{ordinal(record.position)}</span>{' '}
+        of {record.field}
+        {record.points != null && <> — {record.points} pts</>}.
+      </p>
+      {winner && (
+        <p className="font-sans text-[15px] leading-snug text-wrapped-ink [overflow-wrap:anywhere]">
+          {winner.real ? (
+            <>
+              {record.season} leads with{' '}
+              <span className="font-semibold">{winner.isYou ? 'you' : winner.name}</span> out front
+              {winner.points != null && <> ({winner.points} pts)</>}.
+            </>
+          ) : (
+            <>
+              In this league&apos;s all-time re-run, {record.season} went to{' '}
+              <span className="font-semibold">{winner.isYou ? 'you' : winner.name}</span>
+              {winner.points != null && <> ({winner.points} pts)</>}.
+            </>
+          )}
+        </p>
+      )}
+      {winner && !winner.real && (
+        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-wrapped-muted">
+          What-if — re-ranked on that season&apos;s points, not the real result.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -166,7 +224,7 @@ function LoadingScreen() {
 // average-percentile standing + best-ever year, captioned as a cross-years what-if.
 // Legacy-null (not enough shared history) is the lone soft-fail now → the light
 // "come back next year" comeback close (the re-engagement hook, not an error).
-function LegacyScreen({ legacy }) {
+function LegacyScreen({ legacy, onSeasonTap }) {
   if (!legacy) {
     return (
       <ScreenFrame kicker="League legacy">
@@ -186,8 +244,11 @@ function LegacyScreen({ legacy }) {
   return (
     <ScreenFrame kicker="League legacy · every season">
       <div className="mt-2">
-        <LegacyPositionChart series={series} />
+        <LegacyPositionChart series={series} onSelect={onSeasonTap} />
       </div>
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-wrapped-muted mt-1.5">
+        Tap a season for your finish + the what-if winner →
+      </p>
 
       <p className="font-sans text-lg leading-snug mt-3 [overflow-wrap:anywhere]">
         Across every season you&apos;ve played, you rank{' '}

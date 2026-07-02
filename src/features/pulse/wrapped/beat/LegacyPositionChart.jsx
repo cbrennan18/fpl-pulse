@@ -31,13 +31,14 @@ const PAD = { top: 12, right: 14, bottom: 30, left: 30 };
 const PLOT_W = W - PAD.left - PAD.right;
 const PLOT_H = H - PAD.top - PAD.bottom;
 
-export default function LegacyPositionChart({ series }) {
+export default function LegacyPositionChart({ series, onSelect }) {
   if (!series?.length) return null;
 
   const n = series.length;
   const maxField = Math.max(2, ...series.map((s) => s.field)); // spans past + anchor
   const x = (i) => (n === 1 ? PAD.left + PLOT_W / 2 : PAD.left + (i / (n - 1)) * PLOT_W);
   const y = (r) => PAD.top + ((r - 1) / Math.max(1, maxField - 1)) * PLOT_H; // 1 at top
+  const halfCol = n > 1 ? PLOT_W / (n - 1) / 2 : PLOT_W / 2; // per-season tap-target width
 
   // Sparse x labels: first / mid / last, plus the real (this-year) column always.
   const labelIdx = new Set([0, Math.floor((n - 1) / 2), n - 1]);
@@ -96,6 +97,24 @@ export default function LegacyPositionChart({ series }) {
             this year
           </text>
         ) : null))}
+
+        {/* per-season transparent tap targets — painted LAST so they sit on top for
+            hit-testing (the dots/tracks stay visible beneath the clear fill). Guarded
+            with stopPropagation so a tap opens the sheet and never advances the beat. */}
+        {onSelect && series.map((s, i) => (
+          <rect
+            key={`hit-${i}`}
+            x={x(i) - halfCol}
+            y={PAD.top}
+            width={halfCol * 2}
+            height={PLOT_H}
+            fill="transparent"
+            className="cursor-pointer"
+            role="button"
+            aria-label={`${s.season} detail`}
+            onClick={(e) => { e.stopPropagation(); onSelect(s.season); }}
+          />
+        ))}
       </svg>
 
       <div className="flex justify-between px-1 pb-0.5 font-mono text-[9px] uppercase tracking-[0.15em] text-wrapped-muted">

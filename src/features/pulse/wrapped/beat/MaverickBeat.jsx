@@ -23,10 +23,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BeatShell from './BeatShell';
+import DetailSheet from './DetailSheet';
 import { useWrapped } from '../PackContext';
 import { computeMaverick, buildVerdict, conformityPct } from '../calc/maverick';
 
 const QUIZ_SCREEN = 1;
+const PLACEMENT_SCREEN = 3;
 
 export default function MaverickBeat({ screenIndex, ...shell }) {
   const { entries, members, you, seasonElements, finishedGwIds, playerName } = useWrapped();
@@ -40,10 +42,21 @@ export default function MaverickBeat({ screenIndex, ...shell }) {
   const [guess, setGuess] = useState(null); // the element id the user tapped
   const revealedAtRef = useRef(0);
 
+  // Tap→detail: the manager whose lineup + template % is open in the sheet (screen 3).
+  const [detailId, setDetailId] = useState(null);
+
   // Re-entering the quiz screen (forward OR swipe-back) always restarts unanswered.
   useEffect(() => {
     if (screenIndex !== QUIZ_SCREEN) setGuess(null);
   }, [screenIndex]);
+
+  // Leaving the placement screen closes any open detail sheet.
+  useEffect(() => {
+    if (screenIndex !== PLACEMENT_SCREEN) setDetailId(null);
+  }, [screenIndex]);
+
+  const detailRow = detailId != null ? result.ranking.find((r) => r.entryId === detailId) : null;
+  const detail = detailId != null ? result.detailByEntry[detailId] : null;
 
   const handleGuess = (element) => {
     if (guess != null) return; // first guess locks; later taps are ignored
@@ -66,8 +79,63 @@ export default function MaverickBeat({ screenIndex, ...shell }) {
       {screenIndex === 0 && <TemplateScreen result={result} />}
       {screenIndex === 1 && <QuizScreen result={result} guess={guess} onGuess={handleGuess} />}
       {screenIndex === 2 && <PuntsScreen result={result} />}
-      {screenIndex === 3 && <PlacementScreen result={result} />}
+      {screenIndex === 3 && <PlacementScreen result={result} onRowTap={setDetailId} />}
+
+      <DetailSheet
+        open={detailId != null}
+        onClose={() => setDetailId(null)}
+        title={detailRow ? `${detailRow.isYou ? 'You' : detailRow.name} · ${conformityPct(detailRow.conformity)}% template` : ''}
+      >
+        <LineupBreakdown detail={detail} leagueSize={result.count} />
+      </DetailSheet>
     </BeatShell>
+  );
+}
+
+// One manager's conformity, shown as their lineup: the template players they held
+// (the consensus they bought into) vs where they went their own way. Weeks-held is
+// the weight conformity uses, so it's the figure surfaced.
+function LineupBreakdown({ detail, leagueSize }) {
+  if (!detail) return null;
+  const off = detail.offTemplatePlayers.slice(0, 8);
+  return (
+    <div className="space-y-4">
+      <PlayerGroup label="Template held" players={detail.templatePlayers} />
+      <PlayerGroup
+        label="Went their own way"
+        players={off}
+        owned={(p) => (p.owners <= 1 ? 'only them' : `${p.owners} of ${leagueSize}`)}
+      />
+    </div>
+  );
+}
+
+function PlayerGroup({ label, players, owned }) {
+  return (
+    <div>
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-wrapped-muted pb-1 border-b border-wrapped-ink">
+        {label}
+      </p>
+      {players.length ? (
+        <ul>
+          {players.map((p) => (
+            <li key={p.element} className="flex items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15">
+              <span className="flex-1 truncate font-sans text-[15px] text-wrapped-ink">{p.name}</span>
+              {owned && (
+                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-wrapped-muted shrink-0">
+                  {owned(p)}
+                </span>
+              )}
+              <span className="w-12 text-right tabular-nums font-mono text-[12px] text-wrapped-muted shrink-0">
+                {p.weeks} wks
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="font-sans text-sm text-wrapped-muted py-1.5">None.</p>
+      )}
+    </div>
   );
 }
 
@@ -277,9 +345,16 @@ function PuntsScreen({ result }) {
 
 // --- Screen 3 — where you sit (the close) -------------------------------------
 
-function RankRow({ rank, name, conformity, isYou }) {
+function RankRow({ rank, name, conformity, isYou, onTap }) {
   return (
-    <div className="flex items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15">
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation(); // a row tap opens the sheet; never advance the beat
+        onTap();
+      }}
+      className="flex w-full items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15 text-left"
+    >
       <span className="w-5 text-right tabular-nums font-mono text-sm text-wrapped-muted">{rank}</span>
       <span className={`flex-1 truncate font-sans text-[15px] ${isYou ? 'text-wrapped-green font-semibold' : 'text-wrapped-ink'}`}>
         {name}
@@ -288,11 +363,11 @@ function RankRow({ rank, name, conformity, isYou }) {
       <span className={`w-16 text-right tabular-nums font-sans text-[15px] ${isYou ? 'text-wrapped-green font-semibold' : 'text-wrapped-ink'}`}>
         {(conformity * 100).toFixed(1)}%
       </span>
-    </div>
+    </button>
   );
 }
 
-function PlacementScreen({ result }) {
+function PlacementScreen({ result, onRowTap }) {
   const { you, ranking } = result;
   if (!you) return null;
 
@@ -321,7 +396,7 @@ function PlacementScreen({ result }) {
         </div>
         <div className="flex-1 overflow-y-auto min-h-0">
           {ranking.map((r) => (
-            <RankRow key={r.entryId} rank={r.rank} name={r.isYou ? 'You' : r.name} conformity={r.conformity} isYou={r.isYou} />
+            <RankRow key={r.entryId} rank={r.rank} name={r.isYou ? 'You' : r.name} conformity={r.conformity} isYou={r.isYou} onTap={() => onRowTap(r.entryId)} />
           ))}
         </div>
       </div>

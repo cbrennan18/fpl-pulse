@@ -60,8 +60,10 @@ export const SHRINK_PSEUDO_COUNT = 2;
  * @returns {null | {
  *   earliest: string,
  *   standing: { ranking: Array<{id,name,isYou}>, you: {rank,of} },
- *   series:   Array<{season,position,field,real,best}>,   // YOUR records, chronological
- *   bestEver: null | { season, position, field }
+ *   series:   Array<{season,position,field,points,real,best}>,   // YOUR records, chronological
+ *   bestEver: null | { season, position, field },
+ *   winnersBySeason: { [season]: { id, name, points, isYou, real } }  // the SYNTHETIC
+ *     what-if winner (past) / the real current leader (2025/26) — for the tap→detail sheet
  * }}
  */
 export function computeLeagueLegacy({ historyByMember, entries, members, you, finishedGwIds, seasonLabel }) {
@@ -86,8 +88,10 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
   }
 
   // 2. Past counted seasons (≥2 present) → per-member RAW records + past-season counts.
-  const recsByMember = new Map();   // id -> [{ season, position, field, pct, real?, best? }]
+  //    The re-ranked leader (position 1) IS the SYNTHETIC what-if winner for that season.
+  const recsByMember = new Map();   // id -> [{ season, position, field, pct, points, real?, best? }]
   const pastCount = new Map();      // id -> number of past counted seasons
+  const winnersBySeason = {};       // season -> synthetic/real winner (for the detail sheet)
   let earliest = null;
   for (const season of pastSeasons) {
     const present = [];
@@ -98,11 +102,19 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
     present.sort((a, b) => b.points - a.points || a.id - b.id);
     const field = present.length;
     present.forEach((row, i) => {
-      const rec = { season, position: i + 1, field, pct: (i + 1) / field };
+      const rec = { season, position: i + 1, field, pct: (i + 1) / field, points: row.points };
       if (!recsByMember.has(row.id)) recsByMember.set(row.id, []);
       recsByMember.get(row.id).push(rec);
       pastCount.set(row.id, (pastCount.get(row.id) || 0) + 1);
     });
+    const top = present[0];
+    winnersBySeason[season] = {
+      id: top.id,
+      name: memberName(entries?.[top.id], top.id),
+      points: top.points,
+      isYou: top.id === you,
+      real: false, // synthetic re-run — never a real historical result
+    };
     if (earliest === null || season < earliest) earliest = season;
   }
 
@@ -114,6 +126,10 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
   // 4. Real 2025/26 anchor — reuse buildRankSeries (the exact ranking Beat 10 lands on).
   //    field = members PRESENT at the last finished GW; position = your real league rank.
   const lastGw = finishedGwIds?.length ? finishedGwIds[finishedGwIds.length - 1] : null;
+  const netTotalOf = (id) => {
+    const s = entries?.[id]?.gw_summaries?.[lastGw] ?? entries?.[id]?.gw_summaries?.[String(lastGw)];
+    return Number(s?.total ?? 0);
+  };
   if (lastGw != null && seasonLabel) {
     const ranks = buildRankSeries({ entries, members, finishedGwIds });
     const present = members.filter((id) => ranks[id]?.[lastGw] != null);
@@ -121,9 +137,20 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
     if (field >= COUNTED_MIN_PRESENT) {
       for (const id of present) {
         const position = ranks[id][lastGw];
-        const rec = { season: seasonLabel, position, field, pct: position / field, real: true };
+        const rec = { season: seasonLabel, position, field, pct: position / field, points: netTotalOf(id), real: true };
         if (!recsByMember.has(id)) recsByMember.set(id, []);
         recsByMember.get(id).push(rec);
+      }
+      // The real current leader — 2025/26 is a REAL anchor, not a what-if.
+      const leader = present.find((id) => ranks[id][lastGw] === 1);
+      if (leader != null) {
+        winnersBySeason[seasonLabel] = {
+          id: leader,
+          name: memberName(entries?.[leader], leader),
+          points: netTotalOf(leader),
+          isYou: leader === you,
+          real: true,
+        };
       }
     }
   }
@@ -147,7 +174,7 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
 
   // 6. Your series for the chart — RAW records, chronological (seasonLabel sorts last).
   const series = (recsByMember.get(you) || [])
-    .map((r) => ({ season: r.season, position: r.position, field: r.field, real: !!r.real, best: false }))
+    .map((r) => ({ season: r.season, position: r.position, field: r.field, points: r.points, real: !!r.real, best: false }))
     .sort((a, b) => (a.season < b.season ? -1 : a.season > b.season ? 1 : 0));
 
   // 7. Best-ever = your best raw placing: min pct → lower position (the season won) →
@@ -171,5 +198,5 @@ export function computeLeagueLegacy({ historyByMember, entries, members, you, fi
     bestEver = { season: best.season, position: best.position, field: best.field };
   }
 
-  return { earliest, standing, series, bestEver };
+  return { earliest, standing, series, bestEver, winnersBySeason };
 }

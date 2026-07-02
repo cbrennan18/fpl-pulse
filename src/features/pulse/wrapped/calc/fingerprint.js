@@ -178,6 +178,23 @@ export function computeFingerprint({
     posRanks[p] = rankMap(rows, (r) => r.raw[p]);
   });
 
+  // Full-league leaderboard per position, keyed by label (GK/DEF/MID/FWD) for the
+  // tap→detail sheet — the same ranked-rows shape RankTable + the Pattern-4 tables
+  // consume. All managers, sorted by that position's raw points (the ranking above
+  // only surfaces YOUR rank).
+  const positionBoards = {};
+  POSITION_IDS.forEach((p) => {
+    positionBoards[POSITION_LABELS[p]] = [...rows]
+      .sort((a, b) => b.raw[p] - a.raw[p] || a.entryId - b.entryId)
+      .map((r, i) => ({
+        entryId: r.entryId,
+        name: r.name,
+        rank: i + 1,
+        value: r.raw[p],
+        isYou: r.isYou,
+      }));
+  });
+
   const perPosition = POSITION_IDS.map((p) => {
     const rank = posRanks[p].get(youRow.entryId);
     return {
@@ -213,6 +230,7 @@ export function computeFingerprint({
     count: rows.length,
     chart: { positions },
     diagnosis: { overallRank, perPosition, weakest, strongest, isBalanced, balanceRank },
+    positionBoards,
   };
 }
 

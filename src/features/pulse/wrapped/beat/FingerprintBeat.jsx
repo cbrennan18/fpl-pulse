@@ -12,12 +12,16 @@
 // Linear navigation = the shell's default onNext; no guarded-onNext (that's only
 // for skip-risk in-place reveals, which three plain screens avoid).
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BeatShell from './BeatShell';
+import DetailSheet from './DetailSheet';
+import RankTable from './RankTable';
 import FingerprintBars from './FingerprintBars';
 import { useWrapped } from '../PackContext';
 import { computeFingerprint, buildVerdict } from '../calc/fingerprint';
 import { ordinal } from '../calc/setAndForget';
+
+const DIAGNOSIS_SCREEN = 2;
 
 export default function FingerprintBeat({ screenIndex, ...shell }) {
   const { entries, members, you, seasonElements, finishedGwIds, playerPosition } = useWrapped();
@@ -27,6 +31,16 @@ export default function FingerprintBeat({ screenIndex, ...shell }) {
     [entries, members, you, seasonElements, finishedGwIds, playerPosition]
   );
 
+  // Tap→detail: the position (GK/DEF/MID/FWD) whose full-league table is open.
+  const [detailPos, setDetailPos] = useState(null);
+
+  // Leaving the diagnosis screen closes any open detail sheet.
+  useEffect(() => {
+    if (screenIndex !== DIAGNOSIS_SCREEN) setDetailPos(null);
+  }, [screenIndex]);
+
+  const board = detailPos ? result.positionBoards?.[detailPos] : null;
+
   return (
     <BeatShell {...shell}>
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-wrapped-muted">
@@ -35,7 +49,15 @@ export default function FingerprintBeat({ screenIndex, ...shell }) {
 
       {screenIndex === 0 && <QuestionScreen />}
       {screenIndex === 1 && <ChartScreen result={result} />}
-      {screenIndex === 2 && <DiagnosisScreen result={result} />}
+      {screenIndex === 2 && <DiagnosisScreen result={result} onPositionTap={setDetailPos} />}
+
+      <DetailSheet
+        open={detailPos != null}
+        onClose={() => setDetailPos(null)}
+        title={detailPos ? `${detailPos} · full league` : ''}
+      >
+        {board && <RankTable rows={board} />}
+      </DetailSheet>
     </BeatShell>
   );
 }
@@ -85,9 +107,16 @@ function ChartScreen({ result }) {
 
 // Per-position raw-rank row (programme table idiom; ink/muted only — the weak
 // position is never coloured red). The weak link carries a quiet mono tag.
-function RankRow({ pos, count, isWeak }) {
+function RankRow({ pos, count, isWeak, onTap }) {
   return (
-    <div className="flex items-baseline gap-3 py-2 border-b border-wrapped-ink/15">
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation(); // a position tap opens the full-league table; never advance
+        onTap();
+      }}
+      className="flex w-full items-baseline gap-3 py-2 border-b border-wrapped-ink/15 text-left"
+    >
       <span className="w-12 font-mono text-[13px] uppercase tracking-[0.1em] text-wrapped-ink">
         {pos.label}
       </span>
@@ -103,11 +132,11 @@ function RankRow({ pos, count, isWeak }) {
       <span className="w-14 text-right tabular-nums font-sans text-[15px] text-wrapped-muted">
         {pos.points}
       </span>
-    </div>
+    </button>
   );
 }
 
-function DiagnosisScreen({ result }) {
+function DiagnosisScreen({ result, onPositionTap }) {
   const { diagnosis, count } = result;
   if (!diagnosis) return null;
   const { overallRank, perPosition, weakest } = diagnosis;
@@ -134,7 +163,7 @@ function DiagnosisScreen({ result }) {
           <span className="w-14 text-right">Points</span>
         </div>
         {perPosition.map((pos) => (
-          <RankRow key={pos.key} pos={pos} count={count} isWeak={!diagnosis.isBalanced && pos.key === weakest.key} />
+          <RankRow key={pos.key} pos={pos} count={count} isWeak={!diagnosis.isBalanced && pos.key === weakest.key} onTap={() => onPositionTap(pos.key)} />
         ))}
       </div>
 

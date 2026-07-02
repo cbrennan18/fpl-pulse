@@ -149,6 +149,25 @@ export function scoreFrozenSquad(blob, gwIndex, finishedGwIds, positionOf) {
   return total;
 }
 
+// One manager's frozen GW1 STARTING XI, for the tap→detail sheet (Beat 1). Reads the
+// same picks_by_gw[1] spine scoreFrozenSquad scores forward — but returns the named XI
+// (ordered by saved slot, with captain/vice flags) rather than a total. positionOf →
+// element_type (1 GK … 4 FWD) for the position tag.
+export function getGw1Squad(blob, nameOf, positionOf) {
+  const gw1 = blob?.picks_by_gw?.[1] ?? blob?.picks_by_gw?.['1'];
+  const picks = gw1?.picks || [];
+  return picks
+    .filter((p) => p.position <= 11)
+    .sort((a, b) => a.position - b.position)
+    .map((p) => ({
+      element: p.element,
+      name: nameOf ? nameOf(p.element) : `#${p.element}`,
+      type: positionOf ? positionOf(p.element) : 0,
+      isCaptain: !!p.is_captain,
+      isVice: !!p.is_vice,
+    }));
+}
+
 // Exported so sibling beat calcs (e.g. captain.js) name managers the same way.
 export function memberName(blob, id) {
   const s = blob?.summary;

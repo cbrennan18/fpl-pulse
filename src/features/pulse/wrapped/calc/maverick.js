@@ -88,6 +88,7 @@ function emptyResult() {
     best: null,
     worst: null,
     quiz: null,
+    detailByEntry: {},
   };
 }
 
@@ -141,20 +142,34 @@ export function computeMaverick({ entries, members, you, seasonElements, finishe
   }));
 
   // Conformity per member = template squad-weeks / total squad-weeks (weeks-held
-  // weighted: a template player owned longer counts for more).
+  // weighted: a template player owned longer counts for more). Also captures the
+  // named split (template players held vs where they went their own way) for the
+  // tap→detail sheet — same ownership pass, no extra work.
   for (const r of rows) {
     let templateWeeks = 0;
     let totalWeeks = 0;
     let templateOwned = 0;
+    const templatePlayers = [];
+    const offTemplatePlayers = [];
     for (const [el, rec] of r.own) {
       totalWeeks += rec.weeksInSquad;
       if (templateSet.has(el)) {
         templateWeeks += rec.weeksInSquad;
         templateOwned += 1;
+        templatePlayers.push({ element: el, name: nameOf(el), weeks: rec.weeksInSquad });
+      } else {
+        offTemplatePlayers.push({
+          element: el,
+          name: nameOf(el),
+          weeks: rec.weeksInSquad,
+          owners: owners.get(el) || 0,
+        });
       }
     }
     r.conformity = totalWeeks > 0 ? templateWeeks / totalWeeks : 0;
     r.templateOwned = templateOwned;
+    r.templatePlayers = templatePlayers.sort((a, b) => b.weeks - a.weeks || a.element - b.element);
+    r.offTemplatePlayers = offTemplatePlayers.sort((a, b) => b.weeks - a.weeks || a.element - b.element);
   }
 
   const ranking = [...rows]
@@ -170,6 +185,16 @@ export function computeMaverick({ entries, members, you, seasonElements, finishe
   const youRank = ranking.find((r) => r.isYou) || null;
   const youRow = rows.find((r) => r.isYou) || null;
   const leagueAvgConformity = rows.reduce((s, r) => s + r.conformity, 0) / N;
+
+  // Per-manager lineup breakdown for the ranking's tap→detail sheet, keyed by entryId.
+  const detailByEntry = {};
+  for (const r of rows) {
+    detailByEntry[r.entryId] = {
+      conformity: r.conformity,
+      templatePlayers: r.templatePlayers,
+      offTemplatePlayers: r.offTemplatePlayers,
+    };
+  }
 
   // The named "resident contrarian" = the least-conformist OTHER manager.
   const others = ranking.filter((r) => !r.isYou);
@@ -220,6 +245,7 @@ export function computeMaverick({ entries, members, you, seasonElements, finishe
     best,
     worst,
     quiz,
+    detailByEntry,
   };
 }
 

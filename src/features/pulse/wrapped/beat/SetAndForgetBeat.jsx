@@ -17,8 +17,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import BeatShell from './BeatShell';
+import DetailSheet from './DetailSheet';
 import { useWrapped } from '../PackContext';
-import { computeSetAndForget, buildVerdict } from '../calc/setAndForget';
+import { computeSetAndForget, buildVerdict, getGw1Squad } from '../calc/setAndForget';
 
 // Aliased to capitalised refs so they read as components (the project's eslint
 // config doesn't treat `motion.div` member-expression JSX as a use of `motion`).
@@ -26,13 +27,14 @@ const MotionRow = motion.div;
 const MotionCell = motion.span;
 
 const ROW_SPRING = { type: 'spring', stiffness: 500, damping: 42 };
+const POS_LABEL = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
 function fmtDelta(delta) {
   return delta > 0 ? `+${delta}` : `${delta}`;
 }
 
 export default function SetAndForgetBeat({ screenIndex, ...shell }) {
-  const { entries, members, you, seasonElements, finishedGwIds, playerPosition } = useWrapped();
+  const { entries, members, you, seasonElements, finishedGwIds, playerPosition, playerName } = useWrapped();
 
   const result = useMemo(
     () =>
@@ -51,11 +53,20 @@ export default function SetAndForgetBeat({ screenIndex, ...shell }) {
   const [revealed, setRevealed] = useState(false);
   const revealedAtRef = useRef(0);
 
-  // Any time we're not on the data screen, drop back to baseline-first so that
-  // re-entering the screen (forward or via swipe-back) always starts at state A.
+  // Tap→detail: the manager whose frozen GW1 XI is open in the sheet.
+  const [detailId, setDetailId] = useState(null);
+
+  // Any time we're not on the data screen, drop back to baseline-first AND close any
+  // open sheet — so re-entering the screen (forward or via swipe-back) starts clean.
   useEffect(() => {
-    if (screenIndex !== 1) setRevealed(false);
+    if (screenIndex !== 1) {
+      setRevealed(false);
+      setDetailId(null);
+    }
   }, [screenIndex]);
+
+  const detailRow = detailId != null ? result.rows.find((r) => r.entryId === detailId) : null;
+  const detailSquad = detailId != null ? getGw1Squad(entries[detailId], playerName, playerPosition) : [];
 
   const handleNext = () => {
     if (screenIndex === 1 && !revealed) {
@@ -77,9 +88,43 @@ export default function SetAndForgetBeat({ screenIndex, ...shell }) {
       {screenIndex === 0 ? (
         <QuestionScreen />
       ) : (
-        <DataScreen result={result} revealed={revealed} />
+        <DataScreen result={result} revealed={revealed} onRowTap={setDetailId} />
       )}
+
+      <DetailSheet
+        open={detailId != null}
+        onClose={() => setDetailId(null)}
+        title={detailRow ? `${detailRow.isYou ? 'You' : detailRow.name} · Frozen GW1 XI` : ''}
+      >
+        <FrozenXi squad={detailSquad} />
+      </DetailSheet>
     </BeatShell>
+  );
+}
+
+// The frozen opening-day XI, ordered by saved slot, tagged by position, with the
+// GW1 captain (gold C) and vice (muted V) marked — the squad this manager froze.
+function FrozenXi({ squad }) {
+  if (!squad.length) {
+    return <p className="font-sans text-sm text-wrapped-muted">No opening-day squad on record.</p>;
+  }
+  return (
+    <ul>
+      {squad.map((p) => (
+        <li key={p.element} className="flex items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15">
+          <span className="w-9 font-mono text-[11px] uppercase tracking-[0.1em] text-wrapped-muted">
+            {POS_LABEL[p.type] || '—'}
+          </span>
+          <span className="flex-1 truncate font-sans text-[15px] text-wrapped-ink">{p.name}</span>
+          {p.isCaptain && (
+            <span className="font-mono text-[11px] font-bold text-wrapped-gold">C</span>
+          )}
+          {p.isVice && (
+            <span className="font-mono text-[11px] text-wrapped-muted">V</span>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -100,7 +145,7 @@ function QuestionScreen() {
   );
 }
 
-function DataScreen({ result, revealed }) {
+function DataScreen({ result, revealed, onRowTap }) {
   const ordered = revealed ? result.byDelta : result.byBaseline;
   const verdict = buildVerdict(result.you, result.youDeltaRank);
 
@@ -125,7 +170,13 @@ function DataScreen({ result, revealed }) {
             layout
             key={row.entryId}
             transition={ROW_SPRING}
-            className="flex items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15"
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation(); // a row tap opens the sheet; never advance/reveal
+              onRowTap(row.entryId);
+            }}
+            className="flex items-baseline gap-3 py-1.5 border-b border-wrapped-ink/15 cursor-pointer"
           >
             <span className="w-5 text-right tabular-nums font-mono text-sm text-wrapped-muted">
               {i + 1}
