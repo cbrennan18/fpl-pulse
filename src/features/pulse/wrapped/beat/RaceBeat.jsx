@@ -21,11 +21,17 @@
 // drop `sealed`/`handleNext` and render VerdictBody directly (one-line change).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import BeatShell from './BeatShell';
 import RaceChart from './RaceChart';
 import { useWrapped } from '../PackContext';
 import { computeRace, buildVerdict } from '../calc/race';
 import { ordinal } from '../calc/setAndForget';
+
+// bound to references so the animated verdict reads as normal components (BeatShell precedent)
+const MotionDiv = motion.div;
+const MotionP = motion.p;
+const MotionSpan = motion.span;
 
 const REVEAL_SCREEN = 2;
 
@@ -144,38 +150,69 @@ function VerdictScreen({ result, sealed }) {
   return <VerdictBody result={result} />;
 }
 
+// The climax entrance (presentation only — the guard/seal logic is untouched).
+// VerdictBody mounts fresh the instant `sealed` flips, so this initial animation
+// plays exactly once, on the unseal. The name is the payoff — it lands with the
+// most weight (rise + fade + a slight scale-up); the finishes row and the verdict
+// stagger in behind it.
+const VERDICT_STAGGER = {
+  hidden: {},
+  show: { transition: { delayChildren: 0.05, staggerChildren: 0.12 } },
+};
+const VERDICT_RISE = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
+};
+const NEMESIS_POP = {
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+};
+
 function VerdictBody({ result }) {
   const { nemesis, you, count, youWon, youAreWinner } = result;
+  const reduce = useReducedMotion();
 
   return (
-    <div className="mt-3 flex flex-col h-full">
-      <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-wrapped-muted">
+    <MotionDiv
+      className="mt-3 flex flex-col h-full"
+      variants={reduce ? undefined : VERDICT_STAGGER}
+      initial={reduce ? false : 'hidden'}
+      animate="show"
+    >
+      <MotionP
+        variants={reduce ? undefined : VERDICT_RISE}
+        className="font-mono text-[11px] uppercase tracking-[0.25em] text-wrapped-muted"
+      >
         Your nemesis
-      </p>
+      </MotionP>
 
       {/* the named rival — Bebas hero (green if you came out ahead, else ink) */}
-      <span
+      <MotionSpan
+        variants={reduce ? undefined : NEMESIS_POP}
         className={`font-display text-[5rem] leading-[0.85] tracking-tight [overflow-wrap:anywhere] ${
           youWon ? 'text-wrapped-green' : 'text-wrapped-ink'
         }`}
       >
         {nemesis.name}
-      </span>
+      </MotionSpan>
 
       {/* the two finishes, in-league (comparison-set discipline) */}
-      <div className="mt-5 flex items-end gap-6">
+      <MotionDiv variants={reduce ? undefined : VERDICT_RISE} className="mt-5 flex items-end gap-6">
         <FinishStat label="You finished" value={you.finish} count={count} you />
         <span className="font-display text-3xl text-wrapped-muted pb-2">vs</span>
         <FinishStat label={`${nemesis.name} finished`} value={nemesis.finish} count={count} />
-      </div>
+      </MotionDiv>
 
       {/* the win/loss binary — the screenshot payload, both directions */}
-      <p className="font-sans text-xl leading-snug mt-auto pt-4 border-t border-wrapped-ink/30 [overflow-wrap:anywhere]">
+      <MotionP
+        variants={reduce ? undefined : VERDICT_RISE}
+        className="font-sans text-xl leading-snug mt-auto pt-4 border-t border-wrapped-ink/30 [overflow-wrap:anywhere]"
+      >
         {buildVerdict(result)}
         {youAreWinner && ' '}
         {youAreWinner && <span className="text-wrapped-green font-semibold">League champion.</span>}
-      </p>
-    </div>
+      </MotionP>
+    </MotionDiv>
   );
 }
 

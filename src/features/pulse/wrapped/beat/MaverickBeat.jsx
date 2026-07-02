@@ -23,6 +23,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BeatShell from './BeatShell';
+import Reveal from './Reveal';
 import DetailSheet from './DetailSheet';
 import RankTable from './RankTable';
 import { useWrapped } from '../PackContext';
@@ -207,17 +208,17 @@ function QuizCard({ card, guessed, revealed, isAnswer, onGuess, leagueSize }) {
         <span className={`min-w-0 truncate font-sans text-[15px] ${revealed && isAnswer ? 'text-wrapped-green font-semibold' : 'text-wrapped-ink'}`}>
           {card.name}
         </span>
-        {revealed && (
-          <span className={`tabular-nums font-display text-2xl shrink-0 ${isAnswer ? 'text-wrapped-gold' : 'text-wrapped-ink'}`}>
+        <Reveal show={revealed} className="shrink-0">
+          <span className={`tabular-nums font-display text-2xl ${isAnswer ? 'text-wrapped-gold' : 'text-wrapped-ink'}`}>
             {card.pts}
           </span>
-        )}
+        </Reveal>
       </div>
-      {revealed && (
-        <span className="block font-mono text-[10px] uppercase tracking-[0.15em] text-wrapped-muted mt-0.5">
+      <Reveal show={revealed} className="mt-0.5">
+        <span className="block truncate font-mono text-[10px] uppercase tracking-[0.15em] text-wrapped-muted">
           {ownLabel(card, leagueSize)} · {card.weeksInSquad} wks
         </span>
-      )}
+      </Reveal>
     </button>
   );
 }

@@ -24,6 +24,7 @@
 
 import { useEffect, useState } from 'react';
 import BeatShell from './BeatShell';
+import Reveal from './Reveal';
 import { useWrapped } from '../PackContext';
 import { computeChips, buildVerdict, CHIP_KEYS, CHIP_LABEL } from '../calc/chips';
 
@@ -172,12 +173,10 @@ function ChipCard({ chipKey, played, leagueBest, extras, revealed, onReveal }) {
         {figure}
       </div>
 
-      {revealed && (
-        <div className="mt-2 pt-2 border-t border-wrapped-ink/15">
-          <LeagueBestLine youHoldBest={youHoldBest} leagueBest={leagueBest} />
-          <RegretLine chipKey={chipKey} played={played} extras={extras} />
-        </div>
-      )}
+      <Reveal show={revealed} className="mt-2 pt-2 border-t border-wrapped-ink/15">
+        <LeagueBestLine youHoldBest={youHoldBest} leagueBest={leagueBest} />
+        <RegretLine chipKey={chipKey} played={played} extras={extras} />
+      </Reveal>
     </button>
   );
 }
