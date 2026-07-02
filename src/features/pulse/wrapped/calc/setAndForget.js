@@ -41,16 +41,54 @@ export function buildGwPointsIndex(seasonElements, finishedGwIds) {
   return index;
 }
 
-// First bench player (in saved order) who played this GW and matches the blanked
-// starter's type (GK only covers GK; outfield only covers outfield). null if none.
+// FPL formation minimums for a legal XI. GK is always exactly 1 and only ever
+// covered by a GK, so it needs no minimum here.
+const FORMATION_MIN = { 2: 3, 3: 2, 4: 1 }; // DEF>=3, MID>=2, FWD>=1
+const TYPE_KEY = { 2: 'def', 3: 'mid', 4: 'fwd' };
+
+// Outfield tally of a starting XI, for formation-legal autosubs. GK is implicit.
+// Build this from the saved starting XI (position <= 11), pre-autosub.
+export function formationCounts(starters, positionOf) {
+  const counts = { def: 0, mid: 0, fwd: 0 };
+  for (const s of starters) {
+    const key = TYPE_KEY[positionOf(s.element)];
+    if (key) counts[key] += 1;
+  }
+  return counts;
+}
+
+// First bench player (in saved order) eligible to cover a blanked starter:
+//   • matching broad slot — a GK only covers a GK, an outfielder an outfielder;
+//   • actually played (minutes > 0);
+//   • AND leaves a legal formation. FPL will NOT make a cross-position sub that
+//     pulls the vacated line below a minimum it currently meets (>=3 DEF, >=2 MID,
+//     >=1 FWD) — it leaves the blanked starter in for 0. Same-position covers never
+//     change the shape.
+// `counts` (current fielded {def,mid,fwd}) is mutated in place on a successful sub,
+// so multi-blank GWs re-validate against the updated shape, in bench order. When
+// omitted, falls back to the old GK/outfield-only rule.
 // Exported so sibling beats (e.g. fingerprint.js) keep the autosub rule identical.
-export function findBenchSub(starter, bench, used, statOf, positionOf) {
-  const starterIsGk = positionOf(starter.element) === 1;
+export function findBenchSub(starter, bench, used, statOf, positionOf, counts) {
+  const starterType = positionOf(starter.element);
+  const starterIsGk = starterType === 1;
   for (const b of bench) {
     if (used.has(b.element)) continue;
-    const benchIsGk = positionOf(b.element) === 1;
-    if (benchIsGk !== starterIsGk) continue;
-    if (statOf(b.element).minutes > 0) return b;
+    const benchType = positionOf(b.element);
+    if ((benchType === 1) !== starterIsGk) continue;
+    if (statOf(b.element).minutes <= 0) continue;
+    if (!starterIsGk && counts && benchType !== starterType) {
+      const key = TYPE_KEY[starterType];
+      const min = FORMATION_MIN[starterType];
+      // reject only if removing this starter breaches a minimum it currently meets
+      if (key && counts[key] - 1 < min && counts[key] >= min) continue;
+    }
+    if (!starterIsGk && counts) {
+      const sKey = TYPE_KEY[starterType];
+      const bKey = TYPE_KEY[benchType];
+      if (sKey) counts[sKey] -= 1;
+      if (bKey) counts[bKey] += 1;
+    }
+    return b;
   }
   return null;
 }
@@ -80,6 +118,7 @@ export function scoreFrozenSquad(blob, gwIndex, finishedGwIds, positionOf) {
     // Resolve the effective XI: keep starters who played, sub in bench cover for
     // those who blanked. A bench player can only cover one slot.
     const used = new Set();
+    const counts = formationCounts(starters, positionOf);
     let gwPoints = 0;
     for (const starter of starters) {
       const starterStat = statOf(starter.element);
@@ -87,7 +126,7 @@ export function scoreFrozenSquad(blob, gwIndex, finishedGwIds, positionOf) {
         gwPoints += starterStat.points;
         continue;
       }
-      const sub = findBenchSub(starter, bench, used, statOf, positionOf);
+      const sub = findBenchSub(starter, bench, used, statOf, positionOf, counts);
       if (sub) {
         used.add(sub.element);
         gwPoints += statOf(sub.element).points; // bench points count once

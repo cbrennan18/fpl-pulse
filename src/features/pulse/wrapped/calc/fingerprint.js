@@ -32,6 +32,7 @@ import {
   memberName,
   ordinal,
   findBenchSub,
+  formationCounts,
 } from './setAndForget';
 
 export const POSITION_IDS = [1, 2, 3, 4];
@@ -70,6 +71,7 @@ export function scorePositions(blob, gwIndex, finishedGwIds, positionOf) {
       .sort((a, b) => a.position - b.position);
 
     const used = new Set();
+    const counts = formationCounts(starters, positionOf);
     for (const starter of starters) {
       const starterStat = statOf(starter.element);
       if (starterStat.minutes > 0) {
@@ -78,7 +80,7 @@ export function scorePositions(blob, gwIndex, finishedGwIds, positionOf) {
         continue;
       }
       // blanked starter → first eligible bench sub (same rule as setAndForget).
-      const sub = findBenchSub(starter, bench, used, statOf, positionOf);
+      const sub = findBenchSub(starter, bench, used, statOf, positionOf, counts);
       if (sub) {
         used.add(sub.element);
         const pos = positionOf(sub.element);

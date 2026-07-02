@@ -36,7 +36,7 @@
 // buildGwPointsIndex; autosubs via findBenchSub — both reused from setAndForget
 // (DRY: the autosub rule stays single-sourced). memberName/ordinal reused too.
 
-import { buildGwPointsIndex, findBenchSub, memberName, ordinal } from './setAndForget';
+import { buildGwPointsIndex, findBenchSub, formationCounts, memberName, ordinal } from './setAndForget';
 
 // H1/H2 boundary — authoritative from bootstrap chips[] (every chip's H1
 // stop_event = 19, H2 start_event = 20). A member plays each chip <= once/half.
@@ -68,6 +68,7 @@ export function scoreXiForGw(picks, statOf, positionOf, { captainMult = 2 } = {}
   const viceId = picks.find((p) => p.is_vice)?.element;
 
   const used = new Set();
+  const counts = formationCounts(starters, positionOf);
   let total = 0;
   for (const starter of starters) {
     const s = statOf(starter.element);
@@ -75,7 +76,7 @@ export function scoreXiForGw(picks, statOf, positionOf, { captainMult = 2 } = {}
       total += s.points;
       continue;
     }
-    const sub = findBenchSub(starter, bench, used, statOf, positionOf);
+    const sub = findBenchSub(starter, bench, used, statOf, positionOf, counts);
     if (sub) {
       used.add(sub.element);
       total += statOf(sub.element).points;

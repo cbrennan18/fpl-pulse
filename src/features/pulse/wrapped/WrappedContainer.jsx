@@ -33,6 +33,7 @@ import FingerprintBeat from './beat/FingerprintBeat';
 import GameweekKingsBeat from './beat/GameweekKingsBeat';
 import ChipsBeat from './beat/ChipsBeat';
 import BenchBeat from './beat/BenchBeat';
+import LuckSkillBeat from './beat/LuckSkillBeat';
 import RaceBeat from './beat/RaceBeat';
 import CodaBeat from './beat/CodaBeat';
 import RecapCarousel from './recap/RecapCarousel';
@@ -48,6 +49,7 @@ const BEAT_COMPONENTS = {
   'gameweek-kings': GameweekKingsBeat,
   'chips': ChipsBeat,
   'the-bench': BenchBeat,
+  'luck-vs-skill': LuckSkillBeat,
   'the-race': RaceBeat,
   'coda': CodaBeat,
 };

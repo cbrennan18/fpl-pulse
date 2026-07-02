@@ -62,6 +62,8 @@ Pulse is being rebuilt from a generic 10-page stats recap into a mini-league-rel
 
 **Source of truth — READ before touching Pulse:** `features/pulse/specs/story-arc.md` (narrative), `design-spec.md` (structure/flow/interaction), `art-direction.md` (visual language).
 
+**Build log (living, reverse-chronological):** `features/pulse/specs/wrapped-build-log.md` — one entry per build session (most recent on top), recording what shipped, the locked decisions future sessions must respect, deviations, and open flags. Read the top entries for current state before resuming Wrapped work. Like the specs, it's gitignored (kept local).
+
 ### Build rules
 
 - Beat-by-beat. Reflect intent back against the specs before writing code (reflection gate).
