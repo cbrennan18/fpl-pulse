@@ -37,6 +37,8 @@ import LuckSkillBeat from './beat/LuckSkillBeat';
 import RaceBeat from './beat/RaceBeat';
 import CodaBeat from './beat/CodaBeat';
 import RecapCarousel from './recap/RecapCarousel';
+import WrappedHiddenStage from './share/WrappedHiddenStage';
+import useShareCard from './share/useShareCard';
 
 // Real beats land here as they're built; every other slot falls back to the
 // placeholder so the chrome stays exercised for the whole arc.
@@ -69,9 +71,12 @@ export default function WrappedContainer() {
 
   const pack = usePack(leagueId);
   const nav = useBeatNavigation({ beats: BEATS, onComplete: () => setStage('recap') });
+  // Share pipe: rasterise the off-screen card node → 1080² PNG → native share.
+  // Session 1 exports the Cover card behind every beat's onShare (per-beat cards
+  // swap in later behind the same handle).
+  const { stageRef, share: handleShare } = useShareCard({ leagueName });
 
   const goMakeYourOwn = () => navigate('/'); // general entry establishes identity at the dashboard
-  const handleShare = () => {}; // affordance only this session — rasteriser is a later session
 
   // --- Front-door routing ----------------------------------------------------
 
@@ -125,6 +130,9 @@ export default function WrappedContainer() {
 
   return (
     <PackContext.Provider value={value}>
+      {/* Off-screen 1080² card the share pipe rasterises (not the visible screen). */}
+      <WrappedHiddenStage leagueName={leagueName} stageRef={stageRef} />
+
       {stage === 'cover' && (
         <Cover leagueName={leagueName} onBegin={() => setStage('beats')} />
       )}
