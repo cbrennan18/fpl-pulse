@@ -10,8 +10,6 @@ export {
   calculateBestPunt,
 } from './scoringAwards';
 
-export { calculateTop5Earned, calculateTop5Missed } from '../../../utils/scoringUtils';
-
 export {
   calculateWildcards,
   calculateFreeHits,
