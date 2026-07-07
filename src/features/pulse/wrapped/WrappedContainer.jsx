@@ -69,19 +69,29 @@ export default function WrappedContainer() {
   const [leagueName, setLeagueName] = useState('');
   const [you, setYou] = useState(viaLink ? null : sessionId);
   const [stage, setStage] = useState('cover'); // post-ready: cover | beats | recap
+  const [recapIndex, setRecapIndex] = useState(0); // selected card in the recap carousel
   // Beat 11's fetched history, lifted out of CodaBeat so its share card can read it
   // (the one beat that fetches — see LegacyHistoryContext). CodaBeat writes; card reads.
   const [historyByMember, setHistoryByMember] = useState(null);
 
   const pack = usePack(leagueId);
   const nav = useBeatNavigation({ beats: BEATS, onComplete: () => setStage('recap') });
-  // Share pipe: rasterise the off-screen card node → 1080² PNG → native share.
-  // Session 1 exports the Cover card behind every beat's onShare (per-beat cards
-  // swap in later behind the same handle).
-  const { stageRef, share: handleShare } = useShareCard({ leagueName });
+  // Share pipe: rasterise the off-screen card node → 1080² PNG → native share /
+  // download. Captures whatever card the hidden stage currently renders — the
+  // active beat's card, or the recap-selected card.
+  const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueName });
   const legacyHistory = useMemo(() => ({ historyByMember, setHistoryByMember }), [historyByMember]);
 
   const goMakeYourOwn = () => navigate('/'); // general entry establishes identity at the dashboard
+  // X from any beat → back to league-select, uniformly for both ramps. Clearing
+  // leagueId hits the `!leagueId` early return (above the provider), so the whole
+  // beats/hidden-stage subtree unmounts — no stale card, no stuck stage.
+  const closeToLeagueSelect = () => {
+    setLeagueId(null);
+    setStage('cover');
+    setRecapIndex(0);
+    nav.jumpTo(0);
+  };
 
   // --- Front-door routing ----------------------------------------------------
 
@@ -103,11 +113,13 @@ export default function WrappedContainer() {
     );
   }
 
-  // General ramp: choose a league (gated to ingested ones).
+  // League-select (gated to ingested leagues). Gated from `you`, not sessionId, so
+  // a link-ramp arrival (no ?id=, but a roster-picked `you`) still gets its own
+  // league list here — e.g. when the X close returns them to this stage.
   if (!leagueId) {
     return (
       <LeagueSelect
-        teamId={sessionId}
+        teamId={you ?? sessionId}
         onChoose={(id, name) => { setLeagueId(id); setLeagueName(name); }}
       />
     );
@@ -133,9 +145,10 @@ export default function WrappedContainer() {
   const value = { ...pack.data, you, leagueName };
   const activeBeat = BEATS[nav.beatIndex];
   const BeatComponent = BEAT_COMPONENTS[activeBeat.id] ?? PlaceholderBeat;
-  // The card the hidden stage rasterises: the active beat's card while in the beats
-  // stage, else the Cover card (cover/recap). Share fires against whatever's mounted.
-  const shareBeat = stage === 'beats' ? activeBeat : null;
+  // The card the hidden stage rasterises: the active beat's card while in beats, the
+  // carousel-selected card during recap, else null → the Cover card (cover stage).
+  const shareBeat =
+    stage === 'beats' ? activeBeat : stage === 'recap' ? BEATS[recapIndex] : null;
 
   return (
     <PackContext.Provider value={value}>
@@ -161,13 +174,17 @@ export default function WrappedContainer() {
             else nav.prev();
           }}
           onJump={nav.jumpTo}
-          onClose={goMakeYourOwn}
+          onClose={closeToLeagueSelect}
           onShare={handleShare}
         />
       )}
 
       {stage === 'recap' && (
         <RecapCarousel
+          index={recapIndex}
+          onIndex={setRecapIndex}
+          onShare={handleShare}
+          onDownload={handleDownload}
           onReplay={() => { nav.jumpTo(0); setStage('cover'); }}
           onClose={goMakeYourOwn}
         />
