@@ -13,8 +13,9 @@
 //   Link    : ?league=<id>&via=link   → roster-pick (identity) → cover → beats → recap
 // Bare /wrapped (no identity, no usable link) → redirect to landing to identify.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, Navigate } from 'react-router-dom';
+import useUmami from '../../../hooks/useUmami';
 import usePack from './usePack';
 import useBeatNavigation from './beat/useBeatNavigation';
 import { PackContext } from './PackContext';
@@ -60,6 +61,7 @@ const BEAT_COMPONENTS = {
 export default function WrappedContainer() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { track } = useUmami();
 
   const sessionId = Number(searchParams.get('id')) || null;
   const viaLink = searchParams.get('via') === 'link';
@@ -75,12 +77,47 @@ export default function WrappedContainer() {
   const [historyByMember, setHistoryByMember] = useState(null);
 
   const pack = usePack(leagueId);
-  const nav = useBeatNavigation({ beats: BEATS, onComplete: () => setStage('recap') });
+  const nav = useBeatNavigation({
+    beats: BEATS,
+    onComplete: () => { track('wrapped_recap_reached', { leagueId }); setStage('recap'); },
+  });
   // Share pipe: rasterise the off-screen card node → 1080² PNG → native share /
   // download. Captures whatever card the hidden stage currently renders — the
   // active beat's card, or the recap-selected card.
   const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueName });
   const legacyHistory = useMemo(() => ({ historyByMember, setHistoryByMember }), [historyByMember]);
+
+  // --- Funnel instrumentation (Umami) ----------------------------------------
+  // All guarded so re-renders / back-nav / replay don't double-fire.
+
+  // Link-ramp arrival — the #2 shared-link verification metric. Once per mount,
+  // from the URL param (not state), only when the link ramp is actually usable.
+  useEffect(() => {
+    if (viaLink && leagueParam) track('wrapped_link_arrival', { leagueId: leagueParam });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cover reached (funnel entry). Ref keyed on leagueId: fires the first time the
+  // ready cover shows for a league; blocks back-nav/replay/re-render, but a genuine
+  // different-league re-selection fires fresh.
+  const coverFiredForRef = useRef(null);
+  useEffect(() => {
+    if (pack.status === 'complete' && stage === 'cover' && coverFiredForRef.current !== leagueId) {
+      coverFiredForRef.current = leagueId;
+      track('wrapped_cover_viewed', { leagueId });
+    }
+  }, [pack.status, stage, leagueId, track]);
+
+  // Beat first-view (drop-off curve). Keyed on beatIndex only — screenIndex is NOT
+  // a dep, so screen-advance within a beat doesn't re-fire; the seen-set blocks
+  // back-nav re-fires. Furthest-progress per mount.
+  const seenBeatsRef = useRef(new Set());
+  useEffect(() => {
+    if (stage !== 'beats' || seenBeatsRef.current.has(nav.beatIndex)) return;
+    seenBeatsRef.current.add(nav.beatIndex);
+    const beat = BEATS[nav.beatIndex];
+    track('wrapped_beat_viewed', { beatId: beat.id, beatIndex: nav.beatIndex });
+  }, [stage, nav.beatIndex, track]);
 
   const goMakeYourOwn = () => navigate('/'); // general entry establishes identity at the dashboard
   // X from any beat → back to league-select, uniformly for both ramps. Clearing
@@ -107,7 +144,7 @@ export default function WrappedContainer() {
     return (
       <RosterPicker
         leagueId={leagueParam}
-        onPick={(entry, name) => { setYou(entry); setLeagueName(name); }}
+        onPick={(entry, name) => { track('wrapped_roster_picked', { leagueId: leagueParam }); setYou(entry); setLeagueName(name); }}
         onMakeYourOwn={goMakeYourOwn}
       />
     );
@@ -120,7 +157,7 @@ export default function WrappedContainer() {
     return (
       <LeagueSelect
         teamId={you ?? sessionId}
-        onChoose={(id, name) => { setLeagueId(id); setLeagueName(name); }}
+        onChoose={(id, name) => { track('wrapped_league_selected', { leagueId: id }); setLeagueId(id); setLeagueName(name); }}
       />
     );
   }

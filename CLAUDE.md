@@ -56,6 +56,14 @@ src/
 
 **Styling:** Tailwind with custom theme colors (primary green `#28C76F`, accent purple `#8B5CF6` / class `accent-purple`, Manrope font). Custom safe-area utilities for mobile (`safe-p`, `pt-safe-bar`, etc) defined in `tailwind.config.js`. **Note:** Wrapped is a visual **sub-brand** with its own warm-stock palette (see Pulse/Wrapped below) — it deliberately diverges from the app theme. Do not apply the app's green/purple/dark theme to Wrapped beats, and do not apply Wrapped's warm palette elsewhere in the app.
 
+## Deployment & hosting (GitHub Pages)
+
+Static SPA on GitHub Pages under `base: /fpl-pulse/`, custom domain `cbrennan.ie` (the `postbuild` script writes `dist/CNAME` + `.nojekyll`). Deploy with `npm run deploy` (gh-pages → `dist`).
+
+- **Deep-link SPA shim — LOAD-BEARING, do not naively edit.** GH Pages 404s any deep path on a cold load (e.g. a shared `/fpl-pulse/wrapped?league=X&via=link`). `public/404.html` encodes the full path + query into a single `?/…` param and redirects to the app root; an inline decode script at the **top of `index.html` `<head>`** (before the deferred bundle) restores the real URL via `history.replaceState` so BrowserRouter boots on the correct route. Standard rafgraph/spa-github-pages pair, `pathSegmentsToKeep = 1` (keeps the `/fpl-pulse/` segment; 0 double-prepends the basename, 2 leaves a still-404ing target). If you revert `404.html` to a plain redirect, **every shared link 404s to Landing** — the two files are a matched pair.
+- **OG / unfurl meta is STATIC in `index.html`** (wrapped-framed), one shell for the whole app — no per-route/per-league variation, because unfurl crawlers don't run JS (so meta must **never** be react-helmet / JS-injected). `public/og-wrapped.png` (declared 1200×630, shipped 2× retina) is the share card; hrefs are literal absolute `cbrennan.ie` URLs. Per-league dynamic OG would need worker head-injection (deferred).
+- **Analytics:** `hooks/useUmami.js` — self-hosted Umami, **prod-gated by hostname** (nothing fires in dev/preview), exposes `track(name, props)`. House style is to fire events **inline at the interaction/transition point** (see `league/`, `landing/`, and the wrapped funnel in `WrappedContainer`); no analytics wrapper/context.
+
 ## Pulse / Wrapped (active redesign)
 
 Pulse is being rebuilt from a generic 10-page stats recap into a mini-league-relative, story-style "Wrapped."

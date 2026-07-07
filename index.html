@@ -4,17 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>FPL Pulse — Who Won Your League?</title>
-    <meta name="description" content="Track your FPL league's medal table, spot prizes and season awards. See who's winning, who's bottling it, and where you really stand." />
+    <!--
+      SPA fallback decode (rafgraph/spa-github-pages). Restores the real URL that
+      404.html encoded into a ?/… param, via history.replaceState, BEFORE the app
+      bundle loads — so BrowserRouter boots on the correct deep route, never the
+      404-root URL. Must stay ahead of the deferred main.jsx module below.
+    -->
+    <script type="text/javascript">
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?');
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })(window.location);
+    </script>
+
+    <title>FPL Pulse — Your FPL Season, Wrapped</title>
+    <meta name="description" content="Your Fantasy Premier League season as a story — captain calls, bench regrets, the mini-league race, and where you really finished. Make your own." />
     <link rel="canonical" href="https://cbrennan.ie/fpl-pulse" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="./src/assets/favicon.svg" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="FPL Pulse — Who Won Your League?" />
-    <meta property="og:description" content="Track your FPL league's medal table, spot prizes and season awards. See who's winning, who's bottling it, and where you really stand." />
-    <meta property="og:image" content="https://cbrennan.ie/fpl-pulse/og-image.png" />
+    <meta property="og:title" content="FPL Pulse — Your FPL Season, Wrapped" />
+    <meta property="og:description" content="Your Fantasy Premier League season as a story — captain calls, bench regrets, the mini-league race, and where you really finished. Make your own." />
+    <meta property="og:image" content="https://cbrennan.ie/fpl-pulse/og-wrapped.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
@@ -23,9 +44,9 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FPL Pulse — Who Won Your League?" />
-    <meta name="twitter:description" content="Track your FPL league's medal table, spot prizes and season awards. See who's winning, who's bottling it, and where you really stand." />
-    <meta name="twitter:image" content="https://cbrennan.ie/fpl-pulse/og-image.png" />
+    <meta name="twitter:title" content="FPL Pulse — Your FPL Season, Wrapped" />
+    <meta name="twitter:description" content="Your Fantasy Premier League season as a story — captain calls, bench regrets, the mini-league race, and where you really finished. Make your own." />
+    <meta name="twitter:image" content="https://cbrennan.ie/fpl-pulse/og-wrapped.png" />
 
     <!-- Robots -->
     <meta name="robots" content="index, follow" />
