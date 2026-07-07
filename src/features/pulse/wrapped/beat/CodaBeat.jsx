@@ -41,6 +41,7 @@ import DetailSheet from './DetailSheet';
 import LegacyPositionChart from './LegacyPositionChart';
 import RankTable from './RankTable';
 import { useWrapped } from '../PackContext';
+import { useLegacyHistory } from '../share/LegacyHistoryContext';
 import { fetchEntryHistory } from '../../../../utils/api';
 import { computeLeagueLegacy } from '../calc/leagueLegacy';
 import { memberName, ordinal } from '../calc/setAndForget';
@@ -74,6 +75,9 @@ async function fetchAllHistories(members, signal) {
 
 export default function CodaBeat({ screenIndex, ...shell }) {
   const { entries, members, you, finishedGwIds } = useWrapped();
+  // Lift the fetched history so the B11 share card can read it without re-fetching
+  // (the one beat that fetches — see share/LegacyHistoryContext).
+  const { setHistoryByMember } = useLegacyHistory();
   const [data, setData] = useState({ status: 'loading', historyByMember: null });
 
   // The lazy fetch (every member's per-member history for the legacy chart), on mount.
@@ -83,14 +87,14 @@ export default function CodaBeat({ screenIndex, ...shell }) {
     (async () => {
       try {
         const historyByMember = await fetchAllHistories(members, ctrl.signal);
-        if (alive) setData({ status: 'ready', historyByMember });
+        if (alive) { setData({ status: 'ready', historyByMember }); setHistoryByMember(historyByMember); }
       } catch (err) {
         if (err?.name === 'AbortError') return; // unmount — drop quietly
-        if (alive) setData({ status: 'ready', historyByMember: {} });
+        if (alive) { setData({ status: 'ready', historyByMember: {} }); setHistoryByMember({}); }
       }
     })();
     return () => { alive = false; ctrl.abort(); };
-  }, [members]);
+  }, [members, setHistoryByMember]);
 
   const legacy = useMemo(
     () =>

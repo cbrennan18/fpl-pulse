@@ -13,7 +13,7 @@
 //   Link    : ?league=<id>&via=link   → roster-pick (identity) → cover → beats → recap
 // Bare /wrapped (no identity, no usable link) → redirect to landing to identify.
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, Navigate } from 'react-router-dom';
 import usePack from './usePack';
 import useBeatNavigation from './beat/useBeatNavigation';
@@ -39,6 +39,7 @@ import CodaBeat from './beat/CodaBeat';
 import RecapCarousel from './recap/RecapCarousel';
 import WrappedHiddenStage from './share/WrappedHiddenStage';
 import useShareCard from './share/useShareCard';
+import { LegacyHistoryContext } from './share/LegacyHistoryContext';
 
 // Real beats land here as they're built; every other slot falls back to the
 // placeholder so the chrome stays exercised for the whole arc.
@@ -68,6 +69,9 @@ export default function WrappedContainer() {
   const [leagueName, setLeagueName] = useState('');
   const [you, setYou] = useState(viaLink ? null : sessionId);
   const [stage, setStage] = useState('cover'); // post-ready: cover | beats | recap
+  // Beat 11's fetched history, lifted out of CodaBeat so its share card can read it
+  // (the one beat that fetches — see LegacyHistoryContext). CodaBeat writes; card reads.
+  const [historyByMember, setHistoryByMember] = useState(null);
 
   const pack = usePack(leagueId);
   const nav = useBeatNavigation({ beats: BEATS, onComplete: () => setStage('recap') });
@@ -75,6 +79,7 @@ export default function WrappedContainer() {
   // Session 1 exports the Cover card behind every beat's onShare (per-beat cards
   // swap in later behind the same handle).
   const { stageRef, share: handleShare } = useShareCard({ leagueName });
+  const legacyHistory = useMemo(() => ({ historyByMember, setHistoryByMember }), [historyByMember]);
 
   const goMakeYourOwn = () => navigate('/'); // general entry establishes identity at the dashboard
 
@@ -126,12 +131,17 @@ export default function WrappedContainer() {
   // --- Ready: provide the pack + identity to the beats -----------------------
 
   const value = { ...pack.data, you, leagueName };
-  const BeatComponent = BEAT_COMPONENTS[BEATS[nav.beatIndex].id] ?? PlaceholderBeat;
+  const activeBeat = BEATS[nav.beatIndex];
+  const BeatComponent = BEAT_COMPONENTS[activeBeat.id] ?? PlaceholderBeat;
+  // The card the hidden stage rasterises: the active beat's card while in the beats
+  // stage, else the Cover card (cover/recap). Share fires against whatever's mounted.
+  const shareBeat = stage === 'beats' ? activeBeat : null;
 
   return (
     <PackContext.Provider value={value}>
+     <LegacyHistoryContext.Provider value={legacyHistory}>
       {/* Off-screen 1080² card the share pipe rasterises (not the visible screen). */}
-      <WrappedHiddenStage leagueName={leagueName} stageRef={stageRef} />
+      <WrappedHiddenStage leagueName={leagueName} beat={shareBeat} stageRef={stageRef} />
 
       {stage === 'cover' && (
         <Cover leagueName={leagueName} onBegin={() => setStage('beats')} />
@@ -162,6 +172,7 @@ export default function WrappedContainer() {
           onClose={goMakeYourOwn}
         />
       )}
+     </LegacyHistoryContext.Provider>
     </PackContext.Provider>
   );
 }
