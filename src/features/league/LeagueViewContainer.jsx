@@ -11,6 +11,7 @@ import {
   fetchBootstrap,
   fetchSeasonElements,
 } from '../../utils/api';
+import useSeason from '../../hooks/useSeason';
 import { MAX_SAMPLED_MANAGERS } from '../../utils/constants';
 import { getLeagueConfig } from './leagueConfig';
 import { calculateBiMonthlyPrizes, calculateMonthlyPrizes } from './awards/biMonthlyAwards';
@@ -20,6 +21,7 @@ export default function LeagueViewContainer() {
   const [searchParams] = useSearchParams();
   const leagueId = searchParams.get('id');
   const teamId = parseInt(searchParams.get('teamId'), 10);
+  const { season, ready: seasonReady } = useSeason();
 
   const [league, setLeague] = useState(null);
   const [standings, setStandings] = useState([]);
@@ -30,19 +32,29 @@ export default function LeagueViewContainer() {
   const [biMonthlyMeta, setBiMonthlyMeta] = useState(null);
 
   useEffect(() => {
-    if (!leagueId || !teamId) return;
+    // Hold until the season resolves — see HomepageContainer for why.
+    if (!leagueId || !teamId || !seasonReady) return;
 
     const controller = new AbortController();
     const { signal } = controller;
 
     const fetchLeague = async () => {
       try {
-        // 1. Fetch all four data sources in parallel (4 calls total)
+        // 1. Fetch all four data sources in parallel (4 calls total).
+        //
+        // STAGE 3 WILL FIX: fetchLeagueStandings is the LIVE proxy and ignores `season`
+        // — FPL only ever serves the current one, and it reassigns league IDs between
+        // seasons, so in archive mode this returns a DIFFERENT league under the same id
+        // (verified: id 9385 is "Dundanion Road" in 2025 and "FPL GOAT LEAGUE" live).
+        // The league NAME and the standings rows therefore come from the wrong season
+        // while the awards below are computed from the right one. Worse, an empty live
+        // table passes the truthiness guard and empties playerData, since
+        // transformBlobData samples entries BY standings row.
         const [standingsData, entriesPack, bootstrap, seasonElements] = await Promise.all([
           fetchLeagueStandings(leagueId, { signal }),
-          fetchLeagueEntriesPack(leagueId, { signal }),
-          fetchBootstrap({ signal }),
-          fetchSeasonElements({ signal }),
+          fetchLeagueEntriesPack(leagueId, { season, signal }),
+          fetchBootstrap({ season, signal }),
+          fetchSeasonElements({ season, signal }),
         ]);
 
         if (!standingsData?.standings?.results) {
@@ -174,7 +186,7 @@ export default function LeagueViewContainer() {
 
     fetchLeague();
     return () => controller.abort();
-  }, [leagueId, teamId]);
+  }, [leagueId, teamId, season, seasonReady]);
 
   const leagueConfig = getLeagueConfig(leagueId);
 
@@ -185,7 +197,7 @@ export default function LeagueViewContainer() {
       managerTeamId={teamId}
       awards={awards}
       isSampled={isSampled}
-      loading={loading}
+      loading={loading || !seasonReady}
       error={error}
       leagueConfig={leagueConfig}
       biMonthlyMeta={biMonthlyMeta}

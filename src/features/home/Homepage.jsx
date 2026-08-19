@@ -7,6 +7,7 @@ import SkeletonHomepage from '../../components/skeletons/SkeletonHomepage';
 import { CaretRightIcon, ArrowLeftIcon } from '@phosphor-icons/react';
 import PulseLogo from '../../assets/logo-mark.svg';
 import { HEADER_GRADIENT } from '../../utils/constants';
+import { withSeason } from '../../utils/seasons';
 import useUmami from '../../hooks/useUmami';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
@@ -16,7 +17,7 @@ const fadeUp = (i) => ({
   transition: stagger(i),
 });
 
-export default function Homepage({ manager, summary, history, nextDeadline, loading, error, teamId }) {
+export default function Homepage({ manager, summary, history, nextDeadline, loading, error, teamId, seasonParam }) {
   const navigate = useNavigate();
   const { track } = useUmami();
   const [scrubIndex, setScrubIndex] = useState(null);
@@ -174,7 +175,7 @@ export default function Homepage({ manager, summary, history, nextDeadline, load
 
         <motion.button
           {...fadeUp(5)}
-          onClick={() => { track('leagues_banner_clicked'); navigate(`/mini-leagues?id=${teamId}`); }}
+          onClick={() => { track('leagues_banner_clicked'); navigate(withSeason(`/mini-leagues?id=${teamId}`, seasonParam)); }}
           className="w-full text-left rounded-xl border-l-2 border-[#f0b429] h-[130px] flex items-center justify-between"
           style={{ backgroundColor: 'rgba(240,180,41,0.04)', padding: '18px 20px' }}
         >

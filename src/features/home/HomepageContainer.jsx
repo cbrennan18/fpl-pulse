@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Homepage from './Homepage';
 import { fetchEntrySeasonBlob, fetchBootstrap } from '../../utils/api';
+import useSeason from '../../hooks/useSeason';
 
 export default function HomepageContainer() {
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get('id') || '';
+  const { season, requested: seasonParam, ready: seasonReady } = useSeason();
 
   const [manager, setManager] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -16,7 +18,10 @@ export default function HomepageContainer() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!teamId) return;
+    // Wait for the season to resolve. Fetching before we know it would read the
+    // current season and then re-read the resolved one — a visible flash of the
+    // wrong season, which during rollover is a flash of an empty app.
+    if (!teamId || !seasonReady) return;
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -27,8 +32,8 @@ export default function HomepageContainer() {
 
       try {
         const [blob, bootstrap] = await Promise.all([
-          fetchEntrySeasonBlob(teamId, { signal }),
-          fetchBootstrap({ signal }),
+          fetchEntrySeasonBlob(teamId, { season, signal }),
+          fetchBootstrap({ season, signal }),
         ]);
 
         if (!blob) throw new Error('Failed to load entry data');
@@ -88,16 +93,21 @@ export default function HomepageContainer() {
 
     fetchData();
     return () => controller.abort();
-  }, [teamId]);
+  }, [teamId, season, seasonReady]);
+
+  // `loading` state alone leaves a frame between the season resolving and the effect
+  // setting it, which would paint the empty state; the third clause covers that gap.
+  const showLoading = !seasonReady || loading || (Boolean(teamId) && !manager && !error);
 
   return (
     <Homepage
       teamId={teamId}
+      seasonParam={seasonParam}
       manager={manager}
       summary={summary}
       history={history}
       nextDeadline={nextDeadline}
-      loading={loading}
+      loading={showLoading}
       error={error}
     />
   );

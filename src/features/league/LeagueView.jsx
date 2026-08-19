@@ -9,6 +9,7 @@ import GwAwardsCard from './awards-share/GwAwardsCard';
 import SkeletonLeagueView from '../../components/skeletons/SkeletonLeagueView';
 import { HEADER_GRADIENT } from '../../utils/constants';
 import useUmami from '../../hooks/useUmami';
+import { withSeason } from '../../utils/seasons';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
 const fadeUp = (i) => ({
@@ -118,6 +119,9 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
   const [searchParams] = useSearchParams();
   const leagueId = searchParams.get('id');
   const teamId = searchParams.get('teamId');
+  // Read straight off searchParams, matching how this component already sources
+  // leagueId/teamId. Lifting all three to props is a restructure, not this stage's job.
+  const seasonParam = searchParams.get('season');
   const navigate = useNavigate();
   const { track } = useUmami();
 
@@ -146,7 +150,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
           League data isn't available right now. Try again later.
         </p>
         <button
-          onClick={() => navigate(`/mini-leagues?id=${teamId}`)}
+          onClick={() => navigate(withSeason(`/mini-leagues?id=${teamId}`, seasonParam))}
           className="font-mono text-[11px] uppercase tracking-wider text-white/70 border border-white/15 rounded px-4 py-2"
         >
           Back to leagues
@@ -186,7 +190,7 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
       <motion.div {...fadeUp(0)}>
         <div className="px-5 pt-safe-6">
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => navigate(`/mini-leagues?id=${teamId}`)}>
+            <button onClick={() => navigate(withSeason(`/mini-leagues?id=${teamId}`, seasonParam))}>
               <ArrowLeftIcon size={28} weight="light" className="text-white/55" />
             </button>
             <span className="font-body font-semibold text-[15px] text-white text-center max-w-[65%] leading-tight">
