@@ -102,7 +102,7 @@ export default function WrappedContainer() {
   // different-league re-selection fires fresh.
   const coverFiredForRef = useRef(null);
   useEffect(() => {
-    if (pack.status === 'complete' && stage === 'cover' && coverFiredForRef.current !== leagueId) {
+    if (pack.status === 'ready' && stage === 'cover' && coverFiredForRef.current !== leagueId) {
       coverFiredForRef.current = leagueId;
       track('wrapped_cover_viewed', { leagueId });
     }
