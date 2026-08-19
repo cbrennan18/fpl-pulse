@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { fetchEntrySummaryForSeason, checkLeaguesAvailability } from '../../../../utils/api';
 import { SYSTEM_LEAGUE_THRESHOLD } from '../../../../utils/constants';
 import useSeason from '../../../../hooks/useSeason';
+import SeasonPicker from '../../../../components/SeasonPicker';
 import WrappedScreen from '../WrappedScreen';
 import { nameSizeClass } from '../nameType';
 
@@ -20,10 +21,10 @@ export default function LeagueSelect({ teamId, onChoose }) {
   const [leagues, setLeagues] = useState(null); // null = loading
   const [available, setAvailable] = useState(new Set());
   const [error, setError] = useState(false);
-  // STAGE 5 WILL NARROW THIS: Wrapped is retrospective and should offer CLOSED seasons
-  // only, which is its own selector. Until then it follows the app-wide resolution, so
-  // it reads the same season every other screen does rather than a stale live one.
-  const { season, isArchive, label, ready: seasonReady } = useSeason();
+  // Wrapped is retrospective: CLOSED seasons only, never the one in progress. Same
+  // resolution WrappedContainer uses, so the two always agree on the season.
+  const { season, isArchive, label, options, setSeason, ready: seasonReady } =
+    useSeason({ closedOnly: true });
 
   useEffect(() => {
     if (!teamId || !seasonReady) return;
@@ -61,6 +62,14 @@ export default function LeagueSelect({ teamId, onChoose }) {
           Choose your league
         </h1>
       </header>
+
+      <SeasonPicker
+        options={options}
+        value={season}
+        onChange={setSeason}
+        variant="wrapped"
+        className="mt-4"
+      />
 
       {error && (
         <p className="font-mono text-sm text-wrapped-stamp mt-6">

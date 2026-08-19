@@ -109,6 +109,35 @@ export function isArchiveSeason(season, current) {
 }
 
 /**
+ * The rows a season picker should offer.
+ *
+ * Live product (`closedOnly: false`): seasons with data — PLUS the current season when it
+ * has none, rendered disabled. That last part is a deliberate exception to the has_data
+ * filter. Every August the new season is current and empty for a fortnight, and the app
+ * silently falls back to last season; a disabled "2026/27 — no data yet" row is what
+ * explains that to the user. Omitting it leaves them wondering why they're looking at
+ * last season with no way to ask about this one.
+ *
+ * Wrapped (`closedOnly: true`): closed seasons only. No exception needed — a season still
+ * being played is not something you can wrap, so it is simply out of scope, not pending.
+ *
+ * @returns {Array<{season:number, label:string, disabled:boolean}>} newest first
+ */
+export function seasonOptions(index, { closedOnly = false } = {}) {
+  const seasons = index?.seasons;
+  if (!Array.isArray(seasons)) return [];
+
+  return seasons
+    .filter((s) => (closedOnly ? s.closed : s.has_data || s.is_current))
+    .sort((a, b) => b.season - a.season)
+    .map((s) => ({
+      season: s.season,
+      label: formatSeason(s.season),
+      disabled: !s.has_data,
+    }));
+}
+
+/**
  * Append the season to an in-app path, preserving whatever query it already carries.
  * Pass the EXPLICIT season (not the resolved one) so an unpinned link stays
  * "whatever is current" instead of being frozen to today's answer.

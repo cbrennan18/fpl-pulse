@@ -6,6 +6,7 @@ import { LightningIcon, TrophyIcon, HeartbeatIcon } from '@phosphor-icons/react'
 import { fetchEntrySummaryForSeason } from '../../utils/api';
 import useUmami from '../../hooks/useUmami';
 import useSeason from '../../hooks/useSeason';
+import SeasonPicker from '../../components/SeasonPicker';
 import { withSeason } from '../../utils/seasons';
 
 export default function Landing() {
@@ -18,7 +19,12 @@ export default function Landing() {
   // Validate against the SAME season the rest of the app will read. Validating live
   // while /home renders 2025 would let a 2026 ID through the door and then strand it
   // on an empty dashboard.
-  const { season, requested, isArchive, label, ready: seasonReady } = useSeason();
+  const { season, requested, isArchive, label, hasData, options, setSeason, ready: seasonReady } =
+    useSeason();
+  // An explicitly requested season the index says is empty (hand-typed ?season=, or the
+  // rollover window). Submitting would 404 into "No 2026/27 team", which reads as a bad
+  // ID rather than an empty season — so say the true thing and don't let them try.
+  const seasonEmpty = hasData === false;
 
   const handleSubmit = async () => {
     const trimmed = teamId.trim();
@@ -94,6 +100,12 @@ export default function Landing() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="mt-8 w-full max-w-xs space-y-5"
           >
+            <SeasonPicker
+              options={options}
+              value={season}
+              onChange={(y) => { track('season_selected', { season: y, from: 'landing' }); setSeason(y); setError(''); }}
+              className="mb-1"
+            />
             <input
               type="text"
               inputMode="numeric"
@@ -106,11 +118,16 @@ export default function Landing() {
             />
             <button
               onClick={handleSubmit}
-              disabled={submitting || !seasonReady}
+              disabled={submitting || !seasonReady || seasonEmpty}
               className="w-full py-4 bg-[#00e87a] text-black font-display text-xl tracking-widest hover:brightness-110 transition disabled:opacity-50"
             >
               {submitting ? 'CHECKING...' : 'ANALYSE MY SEASON'}
             </button>
+            {seasonEmpty && (
+              <p className="font-body text-xs text-white/40 text-center leading-relaxed">
+                {label} hasn&apos;t started collecting yet. Pick an earlier season.
+              </p>
+            )}
           </motion.div>
 
           {/* Teaser strip */}
@@ -191,9 +208,9 @@ export default function Landing() {
               </ol>
               {isArchive && (
                 <p className="font-body text-xs text-white/50 mt-5 leading-relaxed">
-                  FPL issues a new Team ID every season. We&apos;re showing {label}, so you
+                  FPL issues a new Team ID every season. You&apos;ve selected {label}, so you
                   need that season&apos;s ID — the one in your {label} link, not the ID your
-                  team has today.
+                  team has today. We can&apos;t look it up for you.
                 </p>
               )}
               <p className="font-body text-xs text-white/30 mt-6">

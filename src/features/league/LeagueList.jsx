@@ -7,6 +7,7 @@ import SkeletonLeagueList from '../../components/skeletons/SkeletonLeagueList';
 import { GOLD, SILVER, BRONZE } from '../../utils/constants';
 import useUmami from '../../hooks/useUmami';
 import { withSeason } from '../../utils/seasons';
+import SeasonPicker from '../../components/SeasonPicker';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
 const fadeUp = (i) => ({
@@ -134,7 +135,7 @@ function LeagueRow({ league, i, navigate, teamId, disabled, track, seasonParam }
   );
 }
 
-export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId, seasonParam, isArchive, seasonLabel }) {
+export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId, seasonParam, isArchive, seasonLabel, season, seasonOptions, onSeasonChange }) {
   const navigate = useNavigate();
   const { track } = useUmami();
 
@@ -195,6 +196,12 @@ export default function LeagueList({ manager, leagues, availableLeagueIds, loadi
       {/* Summary strip */}
       <motion.div {...fadeUp(1)}>
         <div className="bg-[#141414] px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <SeasonPicker
+            options={seasonOptions}
+            value={season}
+            onChange={(y) => { track('season_selected', { season: y, from: 'mini_leagues' }); onSeasonChange(y); }}
+            className="mb-3"
+          />
           <p className="font-mono text-[9px] uppercase tracking-widest text-[#525252] text-center">
             {completeLeagues.length} LEAGUES
             <span className="mx-1.5">&middot;</span>

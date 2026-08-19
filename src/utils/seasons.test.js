@@ -8,7 +8,7 @@
 //     {"season":2025,"is_current":false,"closed":true,"has_data":true}]}
 
 import { describe, it, expect } from 'vitest';
-import { resolveSeason, parseSeasonParam, withSeason } from './seasons';
+import { resolveSeason, parseSeasonParam, withSeason, seasonOptions, resolveClosedSeason } from './seasons';
 
 const params = (qs) => new URLSearchParams(qs);
 
@@ -104,5 +104,61 @@ describe('withSeason', () => {
 
   it('starts a query when the path has none', () => {
     expect(withSeason('/wrapped', 2025)).toBe('/wrapped?season=2025');
+  });
+});
+
+
+describe('seasonOptions', () => {
+  it('offers the empty current season DISABLED during the rollover fortnight', () => {
+    // The whole point: without this row the user sees only last season and no
+    // explanation for why the app fell back to it.
+    expect(seasonOptions(ROLLOVER)).toEqual([
+      { season: 2026, label: '2026/27', disabled: true },
+      { season: 2025, label: '2025/26', disabled: false },
+    ]);
+  });
+
+  it('enables the current season once it has data', () => {
+    expect(seasonOptions(MID_SEASON)).toEqual([
+      { season: 2026, label: '2026/27', disabled: false },
+      { season: 2025, label: '2025/26', disabled: false },
+    ]);
+  });
+
+  it('omits the in-progress season entirely for Wrapped', () => {
+    // Not "pending" — a season still being played is out of scope for a recap.
+    expect(seasonOptions(ROLLOVER, { closedOnly: true })).toEqual([
+      { season: 2025, label: '2025/26', disabled: false },
+    ]);
+    expect(seasonOptions(MID_SEASON, { closedOnly: true })).toEqual([
+      { season: 2025, label: '2025/26', disabled: false },
+    ]);
+  });
+
+  it('drops seasons that are neither current nor populated', () => {
+    const withDud = { current: 2026, seasons: [
+      { season: 2026, is_current: true, closed: false, has_data: false },
+      { season: 2025, is_current: false, closed: true, has_data: true },
+      { season: 2024, is_current: false, closed: true, has_data: false },
+    ] };
+    expect(seasonOptions(withDud).map(o => o.season)).toEqual([2026, 2025]);
+    // Wrapped keeps 2024 but disabled — it IS closed, just not ingested.
+    expect(seasonOptions(withDud, { closedOnly: true })).toEqual([
+      { season: 2025, label: '2025/26', disabled: false },
+      { season: 2024, label: '2024/25', disabled: true },
+    ]);
+  });
+
+  it('returns nothing when the index is missing, so the picker hides', () => {
+    for (const empty of [null, undefined, {}]) expect(seasonOptions(empty)).toEqual([]);
+  });
+
+  it('never offers a season the matching resolver would not pick by default', () => {
+    // Guards the two policies against drifting apart.
+    for (const index of [ROLLOVER, MID_SEASON]) {
+      expect(seasonOptions(index).map(o => o.season)).toContain(resolveSeason(index));
+      expect(seasonOptions(index, { closedOnly: true }).map(o => o.season))
+        .toContain(resolveClosedSeason(index));
+    }
   });
 });

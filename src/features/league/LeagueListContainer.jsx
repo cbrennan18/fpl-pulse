@@ -9,7 +9,8 @@ import useSeason from '../../hooks/useSeason';
 export default function LeagueListContainer() {
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get('id') || '';
-  const { season, requested: seasonParam, isArchive, label, ready: seasonReady } = useSeason();
+  const { season, requested: seasonParam, isArchive, label, options, setSeason, ready: seasonReady } =
+    useSeason();
 
   const [manager, setManager] = useState(null);
   const [leagues, setLeagues] = useState([]);
@@ -72,6 +73,9 @@ export default function LeagueListContainer() {
       seasonParam={seasonParam}
       isArchive={isArchive}
       seasonLabel={label}
+      season={season}
+      seasonOptions={options}
+      onSeasonChange={setSeason}
     />
   );
 }
