@@ -18,6 +18,8 @@ import {
   resolveSeason,
   loadSeasonIndex,
   peekSeasonIndex,
+  isArchiveSeason,
+  formatSeason,
 } from '../utils/seasons';
 
 /**
@@ -27,6 +29,8 @@ import {
  *   ready: boolean,         false only while the season is genuinely unknown
  *   seasons: Array,         the index rows (for the pickers in a later stage)
  *   current: number|null,   the worker's current season
+ *   isArchive: boolean,     true when the live FPL API cannot answer for this season
+ *   label: string,          display form, e.g. "2025/26"
  * }}
  */
 export default function useSeason() {
@@ -55,11 +59,16 @@ export default function useSeason() {
     return () => { alive = false; };
   }, []);
 
+  const season = resolveSeason(index, requested);
+  const current = index?.current ?? null;
+
   return {
-    season: resolveSeason(index, requested),
+    season,
     requested,
     ready: requested != null || settled,
     seasons: index?.seasons ?? [],
-    current: index?.current ?? null,
+    current,
+    isArchive: isArchiveSeason(season, current),
+    label: formatSeason(season),
   };
 }

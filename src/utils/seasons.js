@@ -64,6 +64,29 @@ export function resolveSeason(index, requested = null) {
 }
 
 /**
+ * Display label for a season: 2025 -> "2025/26". The worker addresses seasons by their
+ * START year; FPL names them by the span.
+ */
+export function formatSeason(season) {
+  if (season == null) return '';
+  return `${season}/${String((season + 1) % 100).padStart(2, '0')}`;
+}
+
+/**
+ * Is the season being viewed something other than the one FPL is currently playing?
+ *
+ * This — not "is it closed" — is the distinction the entry flow turns on, because it is
+ * exactly the condition under which the LIVE FPL API stops being able to answer. Live
+ * only ever serves the current season, and it reassigns entry and league IDs yearly.
+ *
+ * Unknown `current` (the season index failed) answers false, so the app falls back to
+ * the live path it used before season selection existed rather than to a broken one.
+ */
+export function isArchiveSeason(season, current) {
+  return season != null && current != null && season !== current;
+}
+
+/**
  * Append the season to an in-app path, preserving whatever query it already carries.
  * Pass the EXPLICIT season (not the resolved one) so an unpinned link stays
  * "whatever is current" instead of being frozen to today's answer.

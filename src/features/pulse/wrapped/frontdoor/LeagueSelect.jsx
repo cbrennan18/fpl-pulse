@@ -10,8 +10,9 @@
 // finish only; a count can be sourced from the pack meta after selection later.)
 
 import { useEffect, useState } from 'react';
-import { fetchEntrySummary, checkLeaguesAvailability } from '../../../../utils/api';
+import { fetchEntrySummaryForSeason, checkLeaguesAvailability } from '../../../../utils/api';
 import { SYSTEM_LEAGUE_THRESHOLD } from '../../../../utils/constants';
+import useSeason from '../../../../hooks/useSeason';
 import WrappedScreen from '../WrappedScreen';
 import { nameSizeClass } from '../nameType';
 
@@ -19,15 +20,19 @@ export default function LeagueSelect({ teamId, onChoose }) {
   const [leagues, setLeagues] = useState(null); // null = loading
   const [available, setAvailable] = useState(new Set());
   const [error, setError] = useState(false);
+  // STAGE 5 WILL NARROW THIS: Wrapped is retrospective and should offer CLOSED seasons
+  // only, which is its own selector. Until then it follows the app-wide resolution, so
+  // it reads the same season every other screen does rather than a stale live one.
+  const { season, isArchive, label, ready: seasonReady } = useSeason();
 
   useEffect(() => {
-    if (!teamId) return;
+    if (!teamId || !seasonReady) return;
     const controller = new AbortController();
     const { signal } = controller;
 
     (async () => {
       try {
-        const data = await fetchEntrySummary(teamId, { signal });
+        const data = await fetchEntrySummaryForSeason(teamId, { season, archive: isArchive, signal });
         if (!data) throw new Error('no summary');
         const classic = (data.leagues?.classic || [])
           .filter((l) => l.id > SYSTEM_LEAGUE_THRESHOLD)
@@ -35,7 +40,7 @@ export default function LeagueSelect({ teamId, onChoose }) {
         if (signal.aborted) return;
         setLeagues(classic);
 
-        const set = await checkLeaguesAvailability(classic.map((l) => l.id), { signal });
+        const set = await checkLeaguesAvailability(classic.map((l) => l.id), { season, signal });
         if (!signal.aborted) setAvailable(set);
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -44,7 +49,7 @@ export default function LeagueSelect({ teamId, onChoose }) {
     })();
 
     return () => controller.abort();
-  }, [teamId]);
+  }, [teamId, season, isArchive, seasonReady]);
 
   return (
     <WrappedScreen className="flex flex-col px-6 pt-safe-bar pb-safe-10">
@@ -87,7 +92,7 @@ export default function LeagueSelect({ teamId, onChoose }) {
                   </span>
                   {!ready && (
                     <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-wrapped-muted">
-                      not available yet
+                      {isArchive ? `not covered in ${label}` : 'not available yet'}
                     </span>
                   )}
                 </span>

@@ -213,6 +213,41 @@ export async function fetchArchivedStandings(leagueId, { season, signal } = {}) 
   }
 }
 
+// === Season-aware source selection ===
+//
+// The live FPL API and our archive answer the same two questions, but each only for
+// certain seasons. These two pick the source; every caller passes the same `archive`
+// flag (from useSeason), so the choice is made once per question rather than per screen.
+
+// --- Entry summary for a given season ---
+//
+// The two sources return the SAME OBJECT: the worker stores the raw entry/{id}/ payload
+// as `summary` inside the season blob, so `player_first_name` / `name` / `leagues.classic`
+// read identically either way. No adapter, just a source switch.
+//
+// WHY LIVE STAYS LIVE for the current season: the archive can only answer for entries it
+// has actually built, and /v1/entry/:id does NOT enqueue on a miss — it 404s unless a
+// build already exists, and enqueueing is admin-only. Validating current-season IDs
+// against the blob would therefore reject every manager not already ingested via a
+// league, which in the opening weeks of a season is nearly all of them.
+export async function fetchEntrySummaryForSeason(id, { season, archive = false, signal } = {}) {
+  if (!archive) return fetchEntrySummary(id, { signal });
+  const blob = await fetchEntrySeasonBlob(id, { season, signal });
+  return blob?.summary ?? null;
+}
+
+// --- League standings for a given season ---
+//
+// Returns fetchArchivedStandings' tagged shape in BOTH modes so callers branch once.
+// The live proxy is authoritative for the current season and is reported as 'final';
+// it is the table to render, which is the question the status answers. (It is not
+// "final" in the archive's write-once sense — that only applies to a closed season.)
+export async function fetchStandingsForSeason(leagueId, { season, archive = false, signal } = {}) {
+  if (archive) return fetchArchivedStandings(leagueId, { season, signal });
+  const data = await fetchLeagueStandings(leagueId, { signal });
+  return data ? { status: 'final', data } : null;
+}
+
 // --- Fetch the season index: which seasons exist, and what state each is in ---
 // NOT season-scoped itself (it is how you discover the seasons), so it bypasses v1Url —
 // /v1/2025/seasons is not a route. `closed` and `has_data` are deliberately independent:

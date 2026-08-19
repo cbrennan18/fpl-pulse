@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PulseLogo from '../../assets/logo-mark.svg';
 import { LightningIcon, TrophyIcon, HeartbeatIcon } from '@phosphor-icons/react';
-import { fetchEntrySummary } from '../../utils/api';
+import { fetchEntrySummaryForSeason } from '../../utils/api';
 import useUmami from '../../hooks/useUmami';
+import useSeason from '../../hooks/useSeason';
+import { withSeason } from '../../utils/seasons';
 
 export default function Landing() {
   const [teamId, setTeamId] = useState('');
@@ -13,6 +15,10 @@ export default function Landing() {
   const [showHelp, setShowHelp] = useState(false);
   const navigate = useNavigate();
   const { track } = useUmami();
+  // Validate against the SAME season the rest of the app will read. Validating live
+  // while /home renders 2025 would let a 2026 ID through the door and then strand it
+  // on an empty dashboard.
+  const { season, requested, isArchive, label, ready: seasonReady } = useSeason();
 
   const handleSubmit = async () => {
     const trimmed = teamId.trim();
@@ -26,15 +32,17 @@ export default function Landing() {
     setSubmitting(true);
     setError('');
     try {
-      const data = await fetchEntrySummary(trimmed);
+      const data = await fetchEntrySummaryForSeason(trimmed, { season, archive: isArchive });
       if (!data) {
         setTeamId('');
-        setError('Team not found');
-        track('team_id_error', { reason: 'not_found' });
+        // Name the season we looked in. "Team not found" would be misleading when the
+        // ID is perfectly valid and simply belongs to a different season.
+        setError(isArchive ? `No ${label} team` : 'Team not found');
+        track('team_id_error', { reason: 'not_found', season });
         return;
       }
-      track('team_id_submitted');
-      navigate(`/home?id=${trimmed}`);
+      track('team_id_submitted', { season });
+      navigate(withSeason(`/home?id=${trimmed}`, requested));
     } catch {
       setTeamId('');
       setError('Something went wrong');
@@ -93,12 +101,12 @@ export default function Landing() {
               value={teamId}
               onChange={(e) => { setTeamId(e.target.value); setError(''); }}
               onKeyDown={handleKeyDown}
-              placeholder={error || 'TEAM ID'}
+              placeholder={error || (isArchive ? `${label} TEAM ID` : 'TEAM ID')}
               className={`w-full bg-transparent border-b border-[#00e87a] text-white font-mono text-base text-center px-1 py-3 focus:outline-none ${error ? 'placeholder:text-[#e5484d]' : 'placeholder:text-white/40'}`}
             />
             <button
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !seasonReady}
               className="w-full py-4 bg-[#00e87a] text-black font-display text-xl tracking-widest hover:brightness-110 transition disabled:opacity-50"
             >
               {submitting ? 'CHECKING...' : 'ANALYSE MY SEASON'}
@@ -181,6 +189,13 @@ export default function Landing() {
                 <HelpStep n={2} text='Tap "My Team" — check the URL in your browser.' />
                 <HelpStep n={3} text='Your Team ID is the number in the URL after /entry/.' />
               </ol>
+              {isArchive && (
+                <p className="font-body text-xs text-white/50 mt-5 leading-relaxed">
+                  FPL issues a new Team ID every season. We&apos;re showing {label}, so you
+                  need that season&apos;s ID — the one in your {label} link, not the ID your
+                  team has today.
+                </p>
+              )}
               <p className="font-body text-xs text-white/30 mt-6">
                 Example: fantasy.premierleague.com/entry/<span className="text-[#00e87a]">51776</span>/event/1
               </p>

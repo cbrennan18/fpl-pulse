@@ -6,6 +6,7 @@ import PulseLogo from '../../assets/logo-mark.svg';
 import SkeletonLeagueList from '../../components/skeletons/SkeletonLeagueList';
 import { GOLD, SILVER, BRONZE } from '../../utils/constants';
 import useUmami from '../../hooks/useUmami';
+import { withSeason } from '../../utils/seasons';
 
 const stagger = (i) => ({ delay: i * 0.04, duration: 0.3 });
 const fadeUp = (i) => ({
@@ -53,7 +54,7 @@ const rankColor = (rank, medal) => {
   return '#525252';
 };
 
-function LeagueRow({ league, i, navigate, teamId, disabled, track }) {
+function LeagueRow({ league, i, navigate, teamId, disabled, track, seasonParam }) {
   const rank = league.entry_rank;
   const { medal } = league;
   const accent = disabled ? null : medalColor(medal);
@@ -64,7 +65,7 @@ function LeagueRow({ league, i, navigate, teamId, disabled, track }) {
     <motion.button
       key={league.id}
       {...fadeUp(i + 2)}
-      onClick={disabled ? undefined : () => { track('league_selected', { name: league.name, id: league.id, memberCount: league.rank_count }); navigate(`/mini-league?id=${league.id}&teamId=${teamId}`); }}
+      onClick={disabled ? undefined : () => { track('league_selected', { name: league.name, id: league.id, memberCount: league.rank_count }); navigate(withSeason(`/mini-league?id=${league.id}&teamId=${teamId}`, seasonParam)); }}
       disabled={disabled}
       className={`w-full min-h-[64px] flex items-center text-left transition-colors duration-150 relative ${
         disabled ? 'opacity-40 pointer-events-none' : 'active:bg-[#141414]'
@@ -133,7 +134,7 @@ function LeagueRow({ league, i, navigate, teamId, disabled, track }) {
   );
 }
 
-export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId }) {
+export default function LeagueList({ manager, leagues, availableLeagueIds, loading, error, teamId, seasonParam, isArchive, seasonLabel }) {
   const navigate = useNavigate();
   const { track } = useUmami();
 
@@ -212,7 +213,7 @@ export default function LeagueList({ manager, leagues, availableLeagueIds, loadi
           // While availability check is in-flight, render all as available
           if (!availableLeagueIds) {
             return leaguesWithMedals.map((league, i) => (
-              <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} />
+              <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} seasonParam={seasonParam} />
             ));
           }
 
@@ -222,13 +223,13 @@ export default function LeagueList({ manager, leagues, availableLeagueIds, loadi
           return (
             <>
               {available.map((league, i) => (
-                <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} />
+                <LeagueRow key={league.id} league={league} i={i} navigate={navigate} teamId={teamId} track={track} seasonParam={seasonParam} />
               ))}
               {unavailable.length > 0 && (
                 <>
                   <div className="px-4 pt-6 pb-3 flex items-center gap-3">
                     <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 shrink-0">
-                      Coming Soon
+                      {isArchive ? `Not Covered In ${seasonLabel}` : 'Coming Soon'}
                     </p>
                     <div className="flex-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
                   </div>

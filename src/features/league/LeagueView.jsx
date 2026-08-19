@@ -115,7 +115,7 @@ function getUserPositions(awards, userName) {
   return positions;
 }
 
-export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error, leagueConfig, biMonthlyMeta }) {
+export default function LeagueView({ league, standings, managerTeamId, awards, isSampled, loading, error, leagueConfig, biMonthlyMeta, unavailable, seasonLabel }) {
   const [searchParams] = useSearchParams();
   const leagueId = searchParams.get('id');
   const teamId = searchParams.get('teamId');
@@ -128,17 +128,40 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
   // Track error and success states
   useEffect(() => {
     if (loading) return;
-    if (error || !league) {
+    if (unavailable) {
+      track('league_unavailable', { leagueId, reason: unavailable });
+    } else if (error || !league) {
       track('league_error', { leagueId });
     } else {
       track('league_view_loaded', { leagueId, name: league.name });
     }
-  }, [loading, error, league, leagueId, track]);
+  }, [loading, error, league, leagueId, unavailable, track]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <SkeletonLeagueView />
+      </div>
+    );
+  }
+
+  // "No data for this season" is an ordinary outcome, not a failure — archive coverage
+  // is partial, so say which season came up empty rather than implying a fault the user
+  // could wait out.
+  if (unavailable) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4 px-6">
+        <p className="font-body text-sm text-[#525252] text-center max-w-xs">
+          {unavailable === 'provisional'
+            ? `The ${seasonLabel} table for this league hasn't been finalised yet.`
+            : `This league isn't covered for ${seasonLabel}.`}
+        </p>
+        <button
+          onClick={() => navigate(withSeason(`/mini-leagues?id=${teamId}`, seasonParam))}
+          className="font-mono text-[11px] uppercase tracking-wider text-white/70 border border-white/15 rounded px-4 py-2"
+        >
+          Back to leagues
+        </button>
       </div>
     );
   }
