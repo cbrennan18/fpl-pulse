@@ -37,7 +37,7 @@ function ShareButton({ children, label, onClick }) {
 }
 
 export default function RecapCarousel({ index, onIndex, onShare, onDownload, onReplay, onClose }) {
-  const { leagueId } = useWrapped();
+  const { leagueId, season } = useWrapped();
   const [copied, setCopied] = useState(false);
 
   const beat = BEATS[index];
@@ -47,7 +47,10 @@ export default function RecapCarousel({ index, onIndex, onShare, onDownload, onR
   const next = () => onIndex((index + 1) % BEATS.length);
 
   const copyLink = async () => {
-    const url = `${window.location.origin}${window.location.pathname}?league=${leagueId}&via=link`;
+    // Pin the season explicitly. Without it the link means "the newest closed season",
+    // so a 2025/26 recap shared today would silently become a 2026/27 one next summer.
+    const base = `${window.location.origin}${window.location.pathname}?league=${leagueId}&via=link`;
+    const url = season != null ? `${base}&season=${season}` : base;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);

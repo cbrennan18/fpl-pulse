@@ -14,12 +14,10 @@
 import { useRef, useState, useCallback } from 'react';
 import { FORMAT_DIMS } from '../../../league/awards-share/constants';
 import { captureNodeToBlob, sharePngBlob, downloadBlob } from '../../../league/awards-share/exportImage';
-import { SEASON_LABEL } from '../constants';
 import useUmami from '../../../../hooks/useUmami';
 
-const FILENAME = `fpl-pulse-${SEASON_LABEL.replace('/', '-')}.png`;
-
-export default function useShareCard({ leagueName } = {}) {
+export default function useShareCard({ leagueName, seasonLabel } = {}) {
+  const filename = `fpl-pulse-${String(seasonLabel || '').replace('/', '-')}.png`;
   const stageRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const { track } = useUmami();
@@ -41,24 +39,24 @@ export default function useShareCard({ leagueName } = {}) {
   const share = useCallback(
     () =>
       withCapture(async (blob) => {
-        const result = await sharePngBlob(blob, FILENAME, {
+        const result = await sharePngBlob(blob, filename, {
           title: 'FPL Pulse',
           text: leagueName
-            ? `My ${leagueName} season, wrapped — ${SEASON_LABEL}`
-            : `My FPL season, wrapped — ${SEASON_LABEL}`,
+            ? `My ${leagueName} season, wrapped — ${seasonLabel}`
+            : `My FPL season, wrapped — ${seasonLabel}`,
         });
         track('wrapped_share', { method: result.method });
       }),
-    [withCapture, leagueName, track]
+    [withCapture, leagueName, seasonLabel, filename, track]
   );
 
   const download = useCallback(
     () =>
       withCapture((blob) => {
-        downloadBlob(blob, FILENAME);
+        downloadBlob(blob, filename);
         track('wrapped_download');
       }),
-    [withCapture, track]
+    [withCapture, filename, track]
   );
 
   return { stageRef, share, download, busy };

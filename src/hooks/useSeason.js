@@ -16,6 +16,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   parseSeasonParam,
   resolveSeason,
+  resolveClosedSeason,
   loadSeasonIndex,
   peekSeasonIndex,
   isArchiveSeason,
@@ -23,6 +24,9 @@ import {
 } from '../utils/seasons';
 
 /**
+ * @param {{closedOnly?: boolean}} [options]  closedOnly: resolve Wrapped's retrospective
+ *   default (most recent closed season) instead of the live product's (most recent with
+ *   data). Only the default changes — the ?season= param is identical either way.
  * @returns {{
  *   season: number|null,    the season to fetch with; null means "unprefixed, worker decides"
  *   requested: number|null, the explicit ?season=, or null when the URL doesn't pin one
@@ -33,7 +37,7 @@ import {
  *   label: string,          display form, e.g. "2025/26"
  * }}
  */
-export default function useSeason() {
+export default function useSeason({ closedOnly = false } = {}) {
   const [searchParams] = useSearchParams();
   const requested = parseSeasonParam(searchParams);
 
@@ -59,7 +63,11 @@ export default function useSeason() {
     return () => { alive = false; };
   }, []);
 
-  const season = resolveSeason(index, requested);
+  // Same ?season= convention everywhere; only the DEFAULT differs. Wrapped needs the
+  // most recent CLOSED season, the live product the most recent one with data.
+  const season = closedOnly
+    ? resolveClosedSeason(index, requested)
+    : resolveSeason(index, requested);
   const current = index?.current ?? null;
 
   return {

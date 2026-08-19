@@ -8,6 +8,13 @@ import { fetchEntryHistory } from '../../../utils/api';
 import { computeCareerRatingWithRank } from './career-rating-v1';
 import lookupTable from './rating-to-rank-v1.json';
 
+// NOT a UI season — deliberately left hardcoded while the rest of the app moved to
+// formatSeason()/useSeason (Stage 4 season selection). This constant is a property of the
+// FROZEN ARTIFACT, not of the season being viewed: career-rating-v1.js carries
+// SEASON_THRESHOLDS that stop at 2025/26, and the artifact drops any season it has no
+// threshold for. Pointing this at the viewed season would claim coverage the data does
+// not have. Bump it only when a new season is baked into the artifact upstream.
+//
 // The season the artifact's embedded thresholds currently extend to. FPL keeps the
 // just-completed season in `current` until the next season launches (~July), so until
 // then it isn't in `past` and must be added manually. Bump this together with the

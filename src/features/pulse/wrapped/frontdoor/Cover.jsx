@@ -4,10 +4,9 @@
 // the locked art-direction look — masthead furniture, big Bebas, ruled, square.
 
 import WrappedScreen from '../WrappedScreen';
-import { SEASON_LABEL } from '../constants';
 import { nameSizeClass } from '../nameType';
 
-export default function Cover({ leagueName, onBegin }) {
+export default function Cover({ leagueName, seasonLabel, onBegin }) {
   const displayName = leagueName || 'Your league';
   return (
     <WrappedScreen className="flex flex-col px-6 pt-safe-bar pb-safe-10">
@@ -28,7 +27,7 @@ export default function Cover({ leagueName, onBegin }) {
           <span className={`font-display ${nameSizeClass(displayName, ['text-3xl', 'text-2xl', 'text-xl', 'text-lg'])} leading-none tracking-tight pr-4 min-w-0 [overflow-wrap:anywhere]`}>
             {displayName}
           </span>
-          <span className="font-mono text-sm tabular-nums text-wrapped-muted">{SEASON_LABEL}</span>
+          <span className="font-mono text-sm tabular-nums text-wrapped-muted">{seasonLabel}</span>
         </div>
       </div>
 

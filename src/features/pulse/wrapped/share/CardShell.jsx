@@ -11,13 +11,17 @@
 // league). `rivalCheck` is an optional footer slot for per-beat rival names
 // (unused by the Cover, exposed for later beats).
 
-import { SEASON_LABEL } from '../constants';
+import { useWrapped } from '../PackContext';
 import { nameSizeClass } from '../nameType';
 import { CARD, FONT } from './cardTokens';
 
 const PAD = 72;
 
 export default function CardShell({ kicker, leagueName, rivalCheck, children }) {
+  // Read from context rather than taking a prop: every card builds its own `shell`
+  // object, so a prop would mean editing all eleven to thread one unchanging value.
+  // The hidden stage renders inside PackContext.Provider, so this is always available.
+  const { seasonLabel } = useWrapped();
   const displayName = leagueName || 'Your league';
   // Reuse the shared long-name step-down, but with a PIXEL ladder (inline styles
   // can't take Tailwind size classes).
@@ -93,7 +97,7 @@ export default function CardShell({ kicker, leagueName, rivalCheck, children }) 
               flexShrink: 0,
             }}
           >
-            FPL Pulse · {SEASON_LABEL}
+            FPL Pulse · {seasonLabel}
           </span>
         </div>
       </div>

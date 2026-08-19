@@ -12,10 +12,19 @@
 //   General : ?id=<teamId>            → league-select → cover → beats → recap
 //   Link    : ?league=<id>&via=link   → roster-pick (identity) → cover → beats → recap
 // Bare /wrapped (no identity, no usable link) → redirect to landing to identify.
+//
+// SEASON: the same ?season= param as the rest of the app, but resolved by Wrapped's own
+// rule — the most recent CLOSED season, never the one in progress. The live product's
+// default (most recent with data) is wrong here by construction, which is why the
+// /wrapped links elsewhere deliberately do NOT propagate their season. Links made from
+// the recap DO pin it, so a shared 2025/26 Wrapped keeps pointing at 2025/26 forever;
+// links that predate this (carrying no season) resolve to the newest closed season,
+// which is the one they were made from.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, Navigate } from 'react-router-dom';
 import useUmami from '../../../hooks/useUmami';
+import useSeason from '../../../hooks/useSeason';
 import usePack from './usePack';
 import useBeatNavigation from './beat/useBeatNavigation';
 import { PackContext } from './PackContext';
@@ -63,6 +72,9 @@ export default function WrappedContainer() {
   const navigate = useNavigate();
   const { track } = useUmami();
 
+  const { season, isArchive, label: seasonLabel, ready: seasonReady } =
+    useSeason({ closedOnly: true });
+
   const sessionId = Number(searchParams.get('id')) || null;
   const viaLink = searchParams.get('via') === 'link';
   const leagueParam = Number(searchParams.get('league')) || null;
@@ -76,7 +88,7 @@ export default function WrappedContainer() {
   // (the one beat that fetches — see LegacyHistoryContext). CodaBeat writes; card reads.
   const [historyByMember, setHistoryByMember] = useState(null);
 
-  const pack = usePack(leagueId);
+  const pack = usePack(leagueId, { season });
   const nav = useBeatNavigation({
     beats: BEATS,
     onComplete: () => { track('wrapped_recap_reached', { leagueId }); setStage('recap'); },
@@ -84,7 +96,7 @@ export default function WrappedContainer() {
   // Share pipe: rasterise the off-screen card node → 1080² PNG → native share /
   // download. Captures whatever card the hidden stage currently renders — the
   // active beat's card, or the recap-selected card.
-  const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueName });
+  const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueName, seasonLabel });
   const legacyHistory = useMemo(() => ({ historyByMember, setHistoryByMember }), [historyByMember]);
 
   // --- Funnel instrumentation (Umami) ----------------------------------------
@@ -133,6 +145,10 @@ export default function WrappedContainer() {
   // --- Front-door routing ----------------------------------------------------
 
   // Bare entry: no session identity and no usable shared link → identify first.
+  if (!seasonReady) {
+    return <BuildingSeason variant="loading" />;
+  }
+
   const generalPossible = !!sessionId;
   const linkPossible = viaLink && !!leagueParam;
   if (!generalPossible && !linkPossible) {
@@ -144,6 +160,9 @@ export default function WrappedContainer() {
     return (
       <RosterPicker
         leagueId={leagueParam}
+        season={season}
+        archive={isArchive}
+        seasonLabel={seasonLabel}
         onPick={(entry, name) => { track('wrapped_roster_picked', { leagueId: leagueParam }); setYou(entry); setLeagueName(name); }}
         onMakeYourOwn={goMakeYourOwn}
       />
@@ -179,7 +198,7 @@ export default function WrappedContainer() {
 
   // --- Ready: provide the pack + identity to the beats -----------------------
 
-  const value = { ...pack.data, you, leagueName };
+  const value = { ...pack.data, you, leagueName, season, seasonLabel, isArchive };
   const activeBeat = BEATS[nav.beatIndex];
   const BeatComponent = BEAT_COMPONENTS[activeBeat.id] ?? PlaceholderBeat;
   // The card the hidden stage rasterises: the active beat's card while in beats, the
@@ -194,7 +213,7 @@ export default function WrappedContainer() {
       <WrappedHiddenStage leagueName={leagueName} beat={shareBeat} stageRef={stageRef} />
 
       {stage === 'cover' && (
-        <Cover leagueName={leagueName} onBegin={() => setStage('beats')} />
+        <Cover leagueName={leagueName} seasonLabel={seasonLabel} onBegin={() => setStage('beats')} />
       )}
 
       {stage === 'beats' && (

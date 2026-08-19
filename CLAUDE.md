@@ -72,6 +72,16 @@ Pulse is being rebuilt from a generic 10-page stats recap into a mini-league-rel
 
 **Build log (living, reverse-chronological):** `features/pulse/specs/wrapped-build-log.md` — one entry per build session (most recent on top), recording what shipped, the locked decisions future sessions must respect, deviations, and open flags. Read the top entries for current state before resuming Wrapped work. Like the specs, it's gitignored (kept local).
 
+### Known data-model gap — league legacy across seasons (noted 2026-08-19)
+
+**Beat 11's league legacy cannot work in archive mode, and the window to fix it for 2026/27 closes when that season ends (~May 2027).**
+
+`computeLeagueLegacy` needs every member's `past[]` (from `entry/{id}/history/`). The worker fetches that during ingest but **never persists it** — `services/entry.js` derives `gw_summaries` from `history.current` and discards `past`. It is also not recoverable later: `past[]` is keyed by entry id, and FPL reassigns entry ids yearly, so a closed season's ids return nothing or a stranger's career from the live API. (Verified: entry `51776` is Ciarán Brennan's 2025/26 team and Jakub Kulha's live one.)
+
+Consequence: for any archived season, `CodaBeat` skips the fetch and passes `historyByMember: {}`, so the veteran-depth gate fails, `computeLeagueLegacy` returns `null`, and the beat lands on its "come back next year" close. That is the designed soft-fail, not a bug — but it means the legacy screen is permanently empty for past seasons.
+
+**The fix is a WORKER change and must land before a season closes:** persist `past[]` into the entry blob during ingest, so the archive has it when that season becomes historical. Out of scope for the frontend stages; nothing in this repo can recover the data after the fact.
+
 ### Build rules
 
 - Beat-by-beat. Reflect intent back against the specs before writing code (reflection gate).

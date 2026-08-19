@@ -26,9 +26,11 @@
 // the anchor position reconciles by construction). field = members PRESENT at the last
 // finished GW (not members.length). Counts toward both the chart and the sort key.
 //
-// ROLLOVER GUARD (permanent): SEASON_LABEL is excluded from the synthetic-PAST build
-// forever — once 2025/26 lands in past[] (~July), the real anchor always owns it. (Same
-// guard `careerRating.js` uses for CURRENT_SEASON.)
+// ROLLOVER GUARD (permanent): `seasonLabel` — the season being VIEWED — is excluded from
+// the synthetic-PAST build forever, so that once it lands in past[] (~July) the real
+// anchor still owns it. The guard is unchanged by season selection: it always excludes
+// whichever season the anchor represents, which is exactly what it did when that season
+// was a hardcoded constant. (Same guard `careerRating.js` uses for CURRENT_SEASON.)
 //
 // SOFT-FAIL is a VETERAN-DEPTH gate, not a headcount: half (b) runs iff ≥ LEGACY_MIN_
 // VETERANS members have ≥ VETERAN_SEASON_DEPTH PAST counted seasons. An errored/empty

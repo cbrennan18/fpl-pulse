@@ -11,7 +11,6 @@ import { useWrapped } from '../../PackContext';
 import { useLegacyHistory } from '../LegacyHistoryContext';
 import { computeLeagueLegacy } from '../../calc/leagueLegacy';
 import { ordinal } from '../../calc/setAndForget';
-import { SEASON_LABEL } from '../../constants';
 
 function ComeBack({ shell }) {
   return (
@@ -31,16 +30,16 @@ function ComeBack({ shell }) {
 }
 
 export default function B11LegacyCard({ beat }) {
-  const { entries, members, you, finishedGwIds, leagueName } = useWrapped();
+  const { entries, members, you, finishedGwIds, leagueName, seasonLabel } = useWrapped();
   const { historyByMember } = useLegacyHistory();
   const shell = { kicker: `${beat.edition} — ${beat.theme}`, leagueName };
 
   const legacy = useMemo(
     () =>
       historyByMember
-        ? computeLeagueLegacy({ historyByMember, entries, members, you, finishedGwIds, seasonLabel: SEASON_LABEL })
+        ? computeLeagueLegacy({ historyByMember, entries, members, you, finishedGwIds, seasonLabel })
         : null,
-    [historyByMember, entries, members, you, finishedGwIds]
+    [historyByMember, entries, members, you, finishedGwIds, seasonLabel]
   );
   if (!legacy || legacy.standing?.you?.rank == null) return <ComeBack shell={shell} />;
 

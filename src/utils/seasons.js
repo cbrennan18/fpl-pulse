@@ -64,6 +64,28 @@ export function resolveSeason(index, requested = null) {
 }
 
 /**
+ * Which season should Wrapped show?
+ *
+ * Wrapped is RETROSPECTIVE and filters on `closed`, where the live league product filters
+ * on `has_data`. That asymmetry is why the two cannot share a default: mid-season, the
+ * live product correctly resolves to the season in progress, which is precisely the one
+ * Wrapped must not offer — you cannot wrap a season that is still being played.
+ *
+ * Among closed seasons, prefer one we actually hold data for; fall back to the most
+ * recent closed season if none qualifies, so the caller still gets a season to report
+ * "nothing here" about rather than silently resolving to the live one.
+ */
+export function resolveClosedSeason(index, requested = null) {
+  if (requested != null) return requested;
+
+  const seasons = index?.seasons;
+  if (!Array.isArray(seasons) || seasons.length === 0) return null;
+
+  const closed = seasons.filter((s) => s.closed).sort((a, b) => b.season - a.season);
+  return (closed.find((s) => s.has_data) ?? closed[0])?.season ?? null;
+}
+
+/**
  * Display label for a season: 2025 -> "2025/26". The worker addresses seasons by their
  * START year; FPL names them by the span.
  */

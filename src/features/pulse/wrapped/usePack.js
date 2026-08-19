@@ -26,7 +26,7 @@ import {
 
 const INITIAL = { status: 'idle', data: null };
 
-export default function usePack(leagueId) {
+export default function usePack(leagueId, { season } = {}) {
   const [state, setState] = useState(INITIAL);
   // bump to re-run after a manual retry from the "building" / "error" states
   const [attempt, setAttempt] = useState(0);
@@ -45,7 +45,7 @@ export default function usePack(leagueId) {
       try {
         // Gate on availability first — distinguishes "not ingested" (404) from a
         // real failure, since fetchLeagueEntriesPack collapses all errors to null.
-        const available = await checkLeaguesAvailability([leagueId], { signal });
+        const available = await checkLeaguesAvailability([leagueId], { season, signal });
         if (signal.aborted) return;
         if (!available.has(leagueId)) {
           setState({ status: 'not-available', data: null });
@@ -53,9 +53,9 @@ export default function usePack(leagueId) {
         }
 
         const [pack, bootstrap, seasonElements] = await Promise.all([
-          fetchLeagueEntriesPack(leagueId, { signal }),
-          fetchBootstrap({ signal }),
-          fetchSeasonElements({ signal }),
+          fetchLeagueEntriesPack(leagueId, { season, signal }),
+          fetchBootstrap({ season, signal }),
+          fetchSeasonElements({ season, signal }),
         ]);
         if (signal.aborted) return;
 
@@ -81,6 +81,7 @@ export default function usePack(leagueId) {
           status: 'ready',
           data: {
             leagueId,
+            season,
             members: pack.members,
             entries: pack.entries,
             meta: pack.meta,
@@ -103,7 +104,7 @@ export default function usePack(leagueId) {
     })();
 
     return () => controller.abort();
-  }, [leagueId, attempt]);
+  }, [leagueId, season, attempt]);
 
   const retry = () => setAttempt((n) => n + 1);
   return { ...state, retry };

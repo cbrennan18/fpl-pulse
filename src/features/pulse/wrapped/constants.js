@@ -7,7 +7,9 @@
 // (PulsePage1–10 + PulseContainer at /pulse). A later session flips /pulse over
 // to this flow and reconciles/retires the legacy files. Until then both coexist.
 
-export const SEASON_LABEL = '2025/26';
+// The season label is NOT a constant any more: Wrapped is season-selectable, so it comes
+// from the viewed season via formatSeason() and reaches components through PackContext
+// (`seasonLabel`). See utils/seasons.js.
 
 // The cover counts as progress segment 0; the 11 beats are segments 1–11.
 // edition/theme drive the masthead kicker ("No. 02 — CAPTAIN"). screenCount is

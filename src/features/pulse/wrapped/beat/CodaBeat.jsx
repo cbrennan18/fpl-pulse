@@ -45,7 +45,6 @@ import { useLegacyHistory } from '../share/LegacyHistoryContext';
 import { fetchEntryHistory } from '../../../../utils/api';
 import { computeLeagueLegacy } from '../calc/leagueLegacy';
 import { memberName, ordinal } from '../calc/setAndForget';
-import { SEASON_LABEL } from '../constants';
 
 const FETCH_CONCURRENCY = 8;
 const LEGACY_SCREEN = 1;
@@ -74,14 +73,27 @@ async function fetchAllHistories(members, signal) {
 }
 
 export default function CodaBeat({ screenIndex, ...shell }) {
-  const { entries, members, you, finishedGwIds } = useWrapped();
+  const { entries, members, you, finishedGwIds, seasonLabel, isArchive } = useWrapped();
   // Lift the fetched history so the B11 share card can read it without re-fetching
   // (the one beat that fetches — see share/LegacyHistoryContext).
   const { setHistoryByMember } = useLegacyHistory();
   const [data, setData] = useState({ status: 'loading', historyByMember: null });
 
   // The lazy fetch (every member's per-member history for the legacy chart), on mount.
+  //
+  // ARCHIVE MODE SKIPS IT ENTIRELY. past[] is never persisted into the entry blob — the
+  // harvest fetches history, derives gw_summaries from `current`, and discards `past` —
+  // so there is no archived source. The live endpoint can't stand in either: it is keyed
+  // by entry id, and FPL reassigns those yearly, so asking it about a past season's ids
+  // returns nothing or a stranger's career. N wrong answers is worse than none, so we
+  // hand computeLeagueLegacy an empty map: its veteran-depth gate fails, it returns null,
+  // and the beat lands on the "come back next year" close it already has. No new path.
   useEffect(() => {
+    if (isArchive) {
+      setData({ status: 'ready', historyByMember: {} });
+      setHistoryByMember({});
+      return;
+    }
     const ctrl = new AbortController();
     let alive = true;
     (async () => {
@@ -94,17 +106,17 @@ export default function CodaBeat({ screenIndex, ...shell }) {
       }
     })();
     return () => { alive = false; ctrl.abort(); };
-  }, [members, setHistoryByMember]);
+  }, [members, isArchive, setHistoryByMember]);
 
   const legacy = useMemo(
     () =>
       data.historyByMember
         ? computeLeagueLegacy({
             historyByMember: data.historyByMember,
-            entries, members, you, finishedGwIds, seasonLabel: SEASON_LABEL,
+            entries, members, you, finishedGwIds, seasonLabel,
           })
         : null,
-    [data.historyByMember, entries, members, you, finishedGwIds]
+    [data.historyByMember, entries, members, you, finishedGwIds, seasonLabel]
   );
 
   // Your own name for the sign-off — the Coda closes by addressing you, not a rival.
@@ -147,7 +159,7 @@ export default function CodaBeat({ screenIndex, ...shell }) {
         {shell.beat.edition} — {shell.beat.theme}
       </p>
 
-      {screenIndex === 0 && <SetupScreen />}
+      {screenIndex === 0 && <SetupScreen seasonLabel={seasonLabel} />}
       {screenIndex === 1 && (
         loading
           ? <LoadingScreen />
@@ -213,11 +225,11 @@ function SeasonDetail({ record, winner }) {
   );
 }
 
-function SetupScreen() {
+function SetupScreen({ seasonLabel }) {
   return (
     <div className="mt-4">
       <h2 className="font-display text-6xl leading-[0.9] tracking-tight">
-        That was 2025/26. But across every season?
+        That was {seasonLabel}. But across every season?
       </h2>
       <p className="font-sans text-base text-wrapped-muted mt-5 max-w-sm">
         One season is a story. Your whole history is a verdict. Step back from the
