@@ -465,7 +465,7 @@ function FooterStrip({ leagueName }) {
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {leagueName || 'Mini-League Awards'}
       </span>
-      <span>FPL Pulse · cbrennan.ie/fpl-pulse</span>
+      <span>FPL Pulse · ciaranbrennan.ie/fpl-pulse</span>
     </div>
   );
 }
