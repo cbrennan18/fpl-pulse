@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const WEBSITE_ID = 'b8992f59-bcb2-4f10-a02a-2ffa23f482e0';
 const SCRIPT_SRC = 'https://analytics.ciaranbrennan.ie/script.js';
-const PROD_HOSTS = ['cbrennan.ie', 'www.cbrennan.ie', 'ciaranbrennan.ie', 'www.ciaranbrennan.ie'];
+const PROD_HOSTS = ['ciaranbrennan.ie', 'www.ciaranbrennan.ie'];
 
 function isProd() {
   return PROD_HOSTS.includes(window.location.hostname);
