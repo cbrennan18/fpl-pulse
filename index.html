@@ -50,10 +50,37 @@
 
     <!-- Robots -->
     <meta name="robots" content="index, follow" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FPL Pulse",
+        "url": "https://ciaranbrennan.ie/fpl-pulse/",
+        "description": "Your Fantasy Premier League season as a story — captain calls, bench regrets, the mini-league race, and where you really finished. Make your own.",
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "Web",
+        "author": {
+          "@type": "Person",
+          "name": "Ciarán Brennan",
+          "url": "https://ciaranbrennan.ie/"
+        }
+      }
+    </script>
     <script type="module" crossorigin src="/fpl-pulse/assets/index-9dwUHm0j.js"></script>
     <link rel="stylesheet" crossorigin href="/fpl-pulse/assets/index-DhLLnCEJ.css">
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>FPL Pulse</h1>
+      <p>FPL Pulse is a live tracker for Fantasy Premier League mini-leagues. Enter your FPL Team ID to see your rank history and your mini-league standings.</p>
+      <p>Every gameweek, each league gets GW Awards: hot streaks, most transfers, most hits, chips played. At the end of the season, Wrapped turns your season into a story-style recap.</p>
+      <p>
+        Built by <a href="https://ciaranbrennan.ie/">Ciarán Brennan</a>. See more projects
+        at <a href="https://ciaranbrennan.ie/projects-menu">ciaranbrennan.ie/projects-menu</a>.
+      </p>
+    </noscript>
   </body>
 </html>
