@@ -39,7 +39,7 @@ function Thumbnail({ highlights, gameweek, leagueName }) {
   );
 }
 
-export default function GwAwardsCard({ awards, medalTable, gameweek, leagueName, biMonthlyMeta }) {
+export default function GwAwardsCard({ awards, medalTable, gameweek, leagueName, biMonthlyMeta, leagueId, teamId, season }) {
   const [open, setOpen] = useState(false);
   const { track } = useUmami();
 
@@ -100,6 +100,9 @@ export default function GwAwardsCard({ awards, medalTable, gameweek, leagueName,
         highlights={allHighlights}
         gameweek={gameweek}
         leagueName={leagueName}
+        leagueId={leagueId}
+        teamId={teamId}
+        season={season}
       />
     </>
   );

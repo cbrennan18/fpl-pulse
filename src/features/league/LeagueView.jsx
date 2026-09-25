@@ -283,6 +283,9 @@ export default function LeagueView({ league, standings, managerTeamId, awards, i
             gameweek={league.current_gw}
             leagueName={name}
             biMonthlyMeta={biMonthlyMeta}
+            leagueId={leagueId}
+            teamId={teamId}
+            season={seasonParam}
           />
         </motion.div>
       )}

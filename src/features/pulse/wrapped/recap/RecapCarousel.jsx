@@ -17,6 +17,8 @@ import WrappedScreen from '../WrappedScreen';
 import { BEATS } from '../constants';
 import { BEAT_CARDS } from '../share/beatCardRegistry';
 import { useWrapped } from '../PackContext';
+import { buildShareUrl } from '../../../../lib/shareUrl';
+import useUmami from '../../../../hooks/useUmami';
 
 const PREVIEW_PX = 340;
 const CARD_PX = 1080;
@@ -38,6 +40,7 @@ function ShareButton({ children, label, onClick }) {
 
 export default function RecapCarousel({ index, onIndex, onShare, onDownload, onReplay, onClose }) {
   const { leagueId, season } = useWrapped();
+  const { track } = useUmami();
   const [copied, setCopied] = useState(false);
 
   const beat = BEATS[index];
@@ -49,11 +52,15 @@ export default function RecapCarousel({ index, onIndex, onShare, onDownload, onR
   const copyLink = async () => {
     // Pin the season explicitly. Without it the link means "the newest closed season",
     // so a 2025/26 recap shared today would silently become a 2026/27 one next summer.
-    const base = `${window.location.origin}${window.location.pathname}?league=${leagueId}&via=link`;
-    const url = season != null ? `${base}&season=${season}` : base;
+    const url = buildShareUrl(
+      null,
+      { league: leagueId, via: 'link', season },
+      { utm_source: 'share', utm_medium: 'copy-link', utm_campaign: 'wrapped' }
+    );
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      track('wrapped_link_copied', { leagueId });
       setTimeout(() => setCopied(false), 1600);
     } catch (err) {
       console.error('[wrapped copy link]', err);

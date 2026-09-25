@@ -14,9 +14,10 @@
 import { useRef, useState, useCallback } from 'react';
 import { FORMAT_DIMS } from '../../../league/awards-share/constants';
 import { captureNodeToBlob, sharePngBlob, downloadBlob } from '../../../league/awards-share/exportImage';
+import { buildShareUrl } from '../../../../lib/shareUrl';
 import useUmami from '../../../../hooks/useUmami';
 
-export default function useShareCard({ leagueName, seasonLabel } = {}) {
+export default function useShareCard({ leagueId, season, seasonLabel } = {}) {
   const filename = `fpl-pulse-${String(seasonLabel || '').replace('/', '-')}.png`;
   const stageRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -39,15 +40,19 @@ export default function useShareCard({ leagueName, seasonLabel } = {}) {
   const share = useCallback(
     () =>
       withCapture(async (blob) => {
+        // Pin the season explicitly — see the copy-link handler in RecapCarousel for why.
+        const url = buildShareUrl(
+          null,
+          { league: leagueId, via: 'link', season },
+          { utm_source: 'share', utm_medium: 'web-share', utm_campaign: 'wrapped' }
+        );
         const result = await sharePngBlob(blob, filename, {
           title: 'FPL Pulse',
-          text: leagueName
-            ? `My ${leagueName} season, wrapped — ${seasonLabel}`
-            : `My FPL season, wrapped — ${seasonLabel}`,
+          text: `Our season, wrapped → ${url}`,
         });
         track('wrapped_share', { method: result.method });
       }),
-    [withCapture, leagueName, seasonLabel, filename, track]
+    [withCapture, leagueId, season, filename, track]
   );
 
   const download = useCallback(

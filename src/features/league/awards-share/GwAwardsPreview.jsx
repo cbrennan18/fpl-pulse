@@ -7,6 +7,7 @@ import { FORMAT_DIMS, PALETTE } from './constants';
 import { captureNodeToBlob, copyBlobToClipboard, downloadBlob, sharePngBlob } from './exportImage';
 import { DEFAULT_SELECTED_IDS } from './weeklyHighlights';
 import { groupHighlightsForPicker } from './pickerCategories';
+import { buildShareUrl } from '../../../lib/shareUrl';
 import useUmami from '../../../hooks/useUmami';
 
 const MAX_SELECTED = 8;
@@ -141,6 +142,9 @@ export default function GwAwardsPreview({
   highlights,
   gameweek,
   leagueName,
+  leagueId,
+  teamId,
+  season,
 }) {
   const [format, setFormat] = useState('whatsapp');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -199,9 +203,14 @@ export default function GwAwardsPreview({
 
   async function handleShare() {
     await withCapture('Preparing share', async (blob) => {
+      const url = buildShareUrl(
+        null,
+        { id: leagueId, teamId, season },
+        { utm_source: 'share', utm_medium: 'web-share', utm_campaign: 'gw-awards', utm_content: `gw${gameweek}` }
+      );
       const result = await sharePngBlob(blob, filename(), {
         title: `GW${gameweek} Awards`,
-        text: leagueName ? `Who won GW${gameweek} in ${leagueName}?` : `GW${gameweek} mini-league awards`,
+        text: `GW${gameweek} awards → ${url}`,
       });
       track('gw_awards_share', { gameweek, format, count: filtered.length, method: result.method });
       setStatus(result.method === 'web-share' ? 'Shared' : result.method === 'download' ? 'Downloaded' : '');

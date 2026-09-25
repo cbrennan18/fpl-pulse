@@ -5,10 +5,8 @@ import LeagueListContainer from './features/league/LeagueListContainer';
 import LeagueViewContainer from './features/league/LeagueViewContainer';
 import WrappedContainer from './features/pulse/wrapped/WrappedContainer';
 import GwAwardsPreviewDev from './features/league/awards-share/GwAwardsPreviewDev';
-import useUmami from './hooks/useUmami';
 
 function AppRoutes() {
-  useUmami();
   return (
     <Routes>
       <Route path="/" element={<Landing />} />

@@ -96,7 +96,7 @@ export default function WrappedContainer() {
   // Share pipe: rasterise the off-screen card node → 1080² PNG → native share /
   // download. Captures whatever card the hidden stage currently renders — the
   // active beat's card, or the recap-selected card.
-  const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueName, seasonLabel });
+  const { stageRef, share: handleShare, download: handleDownload } = useShareCard({ leagueId, season, seasonLabel });
   const legacyHistory = useMemo(() => ({ historyByMember, setHistoryByMember }), [historyByMember]);
 
   // --- Funnel instrumentation (Umami) ----------------------------------------
